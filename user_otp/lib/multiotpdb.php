@@ -77,10 +77,9 @@ class MultiOtpDb extends multiotp{
   }
   
   public function CheckUserExists($user = '', $no_server_check = FALSE){
-    $check_user = ('' != $user)?$user:$this->GetUser();
+    $check_user = ('' != $user) ? $user : $this->GetUser();
     $OtpUserDataMapper = new OtpUserDataMapper();
     $OtpUserData = $OtpUserDataMapper->findByUser($check_user);
-    //var_dump($OtpUserData);
     if($OtpUserData){
       return true;
     }

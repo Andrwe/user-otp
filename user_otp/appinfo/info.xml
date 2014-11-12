@@ -7,9 +7,8 @@
     <licence>AGPL</licence>
     <author>Frank Bongrand</author>
     <require>7.0</require>
-	<shipped>true</shipped>
     <types>
-        <authentication/>
+        <prelogin/>
     </types>
 </info>
 

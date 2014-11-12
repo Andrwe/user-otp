@@ -1,0 +1,12 @@
+.groupbottom #otpPassword {
+	padding-left: 36px;
+	width: 221px;
+}
+.otppassword-icon {
+	position:absolute;
+	left:1.25em;
+	top:1.1em;
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=30)";
+	filter:alpha(opacity=30);
+	opacity:.3;
+}

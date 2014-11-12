@@ -23,41 +23,58 @@
  *
  */
 ?>
-<form id='user_otp_form' method="POST" action="#">
-    <div id="userotpSettings" class="personalblock">
-        <ul>
-            <?php foreach ($_['allTab'] as $tab): ?>
-                <li><a href="#<?php p($tab['name']) ?>"><?php p($tab['label']) ?></a></li>
-            <?php endforeach; ?>
-        </ul>
-        <?php foreach ($_['allTab'] as $tab): ?>
-            <fieldset id="<?php p($tab['name']) ?>">
-                <?php foreach ($_[$tab['arrayConf']] as $input): ?>
-                    <p>
-                        <?php print_unescaped($input['label']); ?> : 
-                        <?php if($input['type'] === "text") { ?>
-                            <input type="text" name="<?php p($input['name']); ?>" value="<?php echo $_[$input['name']]?>">
-                        <?php }else if ($input['type'] === "checkbox") { ?>
-                            <input type="checkbox" name="<?php p($input['name']); ?>" id="<?php p($input['name']); ?>" <?php if ($_[$input['name']]) p(' checked'); ?>>
-                        <?php }else if ($input['type'] === "radio") { ?>
-                            <?php $name=$input['name']; ?>
-                            <br/>
-                            <?php foreach ($input['values'] as $radio): ?>
-                            <input type="radio" name="<?php p($name); ?>" value="<?php p($radio['value'])?>" <?php if ($_[$input['name']]===$radio['value']) p(' checked'); ?>> <?php p($radio['label'])?><br/>
-                            <?php endforeach; ?>
-                        <?php }else if ($input['type'] === "select") { ?>
-							<?php $name=$input['name']; ?>
-							<select name="<?php p($name); ?>">
-							<?php foreach ($input['values'] as $select): ?>
-                            <option value="<?php p($select['value'])?>" <?php if ($_[$input['name']]===$select['value']) p(' selected'); ?>> <?php p($select['label'])?></option>
-                            <?php endforeach; ?>
-                            </select>
-						<?php } ?>
-                    </p>
-                <?php endforeach; ?>
-            </fieldset>
-        <?php endforeach; ?>
-        <input type="hidden" name="requesttoken" value="<?php p($_['requesttoken']);?>" />
-        <input type='submit' value='<?php p($l->t('Save'));?>'>
-    </div>
+<form id='user_otp' class='section'>
+	<h2><?php p($l->t('One Time Password')); ?></h2>
+
+	<?php foreach ($_['configOtp'] as $option): ?>
+		<p>
+			<?php if ($option['type'] === 'checkbox'): ?>
+
+				<input class="otpApplicable" type="<?php p($option['type']) ?>"
+					name="<?php p($option['name']) ?>"
+					<?php $option['value'] ? p('checked=checked') : '' ?> 
+				/>
+				<label for="<?php p($option['name']) ?>">
+					<?php p($option['label']) ?>:
+				</label>
+
+			<?php elseif ($option['type'] === 'text' or $option['type'] === 'number'): ?>
+
+				<label for="<?php p($option['name']) ?>">
+					<?php p($option['label']) ?>:
+				</label><br />
+
+				<input class="otpApplicable" type="<?php p($option['type']) ?>"
+					name="<?php p($option['name']) ?>"
+					value="<?php p($option['value']) ?>"
+					<?php isset($option['pattern']) ? p('pattern=^[' . $option['pattern'] . ']*$') : '' ?>
+				/>
+
+			<?php elseif ($option['type'] === 'select'): ?>
+
+				<label for="<?php p($option['name']) ?>">
+					<?php p($option['label']) ?>:
+				</label><br />
+
+				<select class="otpApplicable" name="<?php p($option['name']) ?>">
+				<?php foreach ($option['values'] as $value): ?>
+					<option value="<?php p($value['value']) ?>"
+						<?php $value['value'] == $option['value'] ? p('selected=selected') : ''?>>
+						<?php p($value['label']) ?>
+					</option>
+				<?php endforeach ?>
+				</select>
+
+			<?php endif; ?>
+
+			<?php if (isset($option['description'])):	?>
+				<br />
+				<em><?php print_unescaped($option['description']) ?></em>
+			<?php endif ?>
+		</p>
+
+		<?php if ($option['type'] !== 'checkbox'): ?>
+		<br />
+		<?php endif ?>
+	<?php endforeach; ?>
 </form>
