@@ -5,46 +5,40 @@
  * See the COPYING-README file.
  */
 
+include_once("user_otp/lib/multiotpdb.php");
+
 OC_Util::checkSubAdminUser();
-OC_App::loadApps();
 
 // We have some javascript foo!
 //OC_Util::addScript( 'settings', 'users/users' );
 OC_Util::addScript( 'user_otp', 'list_users' );
-OC_Util::addScript( 'core', 'multiselect' );
-OC_Util::addScript( 'core', 'singleselect' );
+//OC_Util::addScript( 'core', 'multiselect' );
+//OC_Util::addScript( 'core', 'singleselect' );
 OC_Util::addScript('core', 'jquery.inview');
 OC_Util::addStyle( 'settings', 'settings' );
-OC_App::setActiveNavigationEntry( 'core_users' );
+//OC_App::setActiveNavigationEntry( 'core_users' );
 
 $users = array();
 $groups = array();
 
 $isadmin = OC_User::isAdminUser(OC_User::getUser());
-$recoveryAdminEnabled = OC_App::isEnabled('files_encryption') &&
-					    OC_Appconfig::getValue( 'files_encryption', 'recoveryAdminEnabled' );
+
+//var_dump(__LINE__);
+//var_dump($isadmin);
+//exit();
 
 if($isadmin) {
 	$accessiblegroups = OC_Group::getGroups();
 	$accessibleusers = OC_User::getDisplayNames('', 30);
 	$subadmins = OC_SubAdmin::getAllSubAdmins();
-}else{
+} else {
 	$accessiblegroups = OC_SubAdmin::getSubAdminsGroups(OC_User::getUser());
+var_dump(__LINE__);
+var_dump($accessiblegroups);
+exit();
 	$accessibleusers = OC_Group::displayNamesInGroups($accessiblegroups, '', 30);
 	$subadmins = false;
 }
-
-// load preset quotas
-//~ $quotaPreset=OC_Appconfig::getValue('files', 'quota_preset', '1 GB, 5 GB, 10 GB');
-//~ $quotaPreset=explode(',', $quotaPreset);
-//~ foreach($quotaPreset as &$preset) {
-	//~ $preset=trim($preset);
-//~ }
-//~ $quotaPreset=array_diff($quotaPreset, array('default', 'none'));
-
-//~ $defaultQuota=OC_Appconfig::getValue('files', 'default_quota', 'none');
-//~ $defaultQuotaIsUserDefined=array_search($defaultQuota, $quotaPreset)===false
-	//~ && array_search($defaultQuota, array('none', 'default'))===false;
 
 $mOtp =  new MultiOtpDb(OCP\Config::getAppValue(
             'user_otp','EncryptionKey','DefaultCliEncryptionKey')
@@ -52,9 +46,6 @@ $mOtp =  new MultiOtpDb(OCP\Config::getAppValue(
 
 // load users and quota
 foreach($accessibleusers as $uid => $displayName) {
-	//~ $quota=OC_Preferences::getValue($uid, 'files', 'quota', 'default');
-	//~ $isQuotaUserDefined=array_search($quota, $quotaPreset)===false
-		//~ && array_search($quota, array('none', 'default'))===false;
 
 	$name = $displayName;
 	if ( $displayName !== $uid ) {
@@ -71,7 +62,7 @@ foreach($accessibleusers as $uid => $displayName) {
 		$mOtp->SetUser($uid);
 		$UserTokenSeed=base32_encode(hex2bin($mOtp->GetUserTokenSeed()));
 		$UserLocked=$mOtp->GetUserLocked();
-		$UserAlgorithm=$mOtp->GetUserAlgorithm();
+		$UserAlgorithm=strtoupper($mOtp->GetUserAlgorithm());
 		$UserPin=$mOtp->GetUserPin();
 		$UserPrefixPin=$mOtp->GetUserPrefixPin();
 	}
@@ -79,10 +70,8 @@ foreach($accessibleusers as $uid => $displayName) {
 	$users[] = array(
 		"name" => $uid,
 		"displayName" => $displayName,
-		"groups" => OC_Group::getUserGroups($uid),
-		//~ 'quota' => $quota,
-		//~ 'isQuotaUserDefined' => $isQuotaUserDefined,
-		'subadmin' => OC_SubAdmin::getSubAdminsGroups($uid),
+//		"groups" => OC_Group::getUserGroups($uid),
+//		'subadmin' => OC_SubAdmin::getSubAdminsGroups($uid),
 		'OtpExist' => $OtpExist,
 		'UserTokenSeed' => $UserTokenSeed,
 		'UserLocked'=>$UserLocked,
@@ -100,14 +89,10 @@ foreach( $accessiblegroups as $i ) {
 $tmpl = new OC_Template( "user_otp", "list_users", "user" );
 $tmpl->assign('PrefixPin',(OCP\Config::getAppValue('user_otp','UserPrefixPin','0')?1:0));
 $tmpl->assign( 'users', $users );
-$tmpl->assign( 'groups', $groups );
-$tmpl->assign( 'isadmin', (int) $isadmin);
-$tmpl->assign( 'subadmins', $subadmins);
-$tmpl->assign( 'numofgroups', count($accessiblegroups));
-//~ $tmpl->assign( 'quota_preset', $quotaPreset);
-//~ $tmpl->assign( 'default_quota', $defaultQuota);
-//~ $tmpl->assign( 'defaultQuotaIsUserDefined', $defaultQuotaIsUserDefined);
-$tmpl->assign( 'recoveryAdminEnabled', $recoveryAdminEnabled);
+//$tmpl->assign( 'groups', $groups );
+//$tmpl->assign( 'isadmin', (int) $isadmin);
+//$tmpl->assign( 'subadmins', $subadmins);
+//$tmpl->assign( 'numofgroups', count($accessiblegroups));
 $tmpl->assign('enableAvatars', \OC_Config::getValue('enable_avatars', true));
 $tmpl->printPage();
 
