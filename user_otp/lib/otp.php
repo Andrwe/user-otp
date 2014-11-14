@@ -32,31 +32,8 @@ include_once("user_otp/lib/multiotpdb.php");
  */
 class OC_User_OTP {
 
-	public function pre_login($login) {
-		\OC::$server->getLogger()->warning('Running for user ' . $login['uid'], array('app' => 'user_otp'));
-		$session = OC::$server->getSession();
-		if (!empty($session->get('otp_run')) &&
-			$session->get('otp_result_code') === 'otpsuccess'
-		) {
-			return true;
-		}
-		if (!empty($session->get('otp_run')) &&
-				!empty($session->get('otp_result_code')) &&
-				$session->get('otp_result_code') !== 'otpsuccess'
-		) {
-			self::displayLoginPage('', array(
-					'code' => $session->get('otp_result_code'),
-					'text' => $session->get('otp_result_text')
-				));
-			$session->clear();
-			return true;
-		}
+	static public function pre_login($login) {
 
-		$session->set('otp_run', 'true');
-
-		if (\OCP\App::isEnabled('user_otp') === false) {
-			return true;
-		}
 		// if access is made by remote.php and option is not set to force mtop, keep standard auth methode
 		// this for keep working webdav access and sync apps
 		// And news api for android new app
@@ -106,9 +83,6 @@ class OC_User_OTP {
 		}
 
 		if(!isset($_POST['otpPassword']) || $_POST['otpPassword']===""){
-			$session->set('otp_result_code', 'otpmissing');
-			$session->set('otp_result_text', 'The OTP token is missing');
-			OCP\Util::addScript('user_otp', 'error');
 			self::displayLoginPage('', array(
 					'code' => 'otpmissing',
 					'text' => 'The OTP token is missing'
@@ -119,19 +93,14 @@ class OC_User_OTP {
 		OC_Log::write('OC_USER_OTP','used OTP : '.$_POST['otpPassword'], OC_Log::DEBUG);
 		$result = $mOtp->CheckToken($_POST['otpPassword']);
 		if ($result===0){
-			$session->set('otp_result_code', 'otpsuccess');
 			return true;
 		}else{
-			$session->set('otp_result_code', 'otpwrong');
-			OCP\Util::addScript('user_otp', 'error');
 			if(isset($mOtp->_errors_text[$result])){
-				$session->set('otp_result_text', $mOtp->_errors_text[$result]);
 				self::displayLoginPage('', array(
 						'code' => 'otpmissing',
 						'text' => $mOtp->_errors_text[$result]
 					));
 			} else {
-				$session->set('otp_result_text', 'The OTP token was wrong');
 				self::displayLoginPage('', array(
 						'code' => 'otpmissing',
 						'text' => 'The OTP token was wrong'
@@ -143,6 +112,7 @@ class OC_User_OTP {
 	}
 
 	private function displayLoginPage($errors = array(), $otperror = '') {
+		OCP\Util::addScript('user_otp', 'error');
 		$parameters = array();
 		foreach ($errors as $value) {
 			$parameters[$value] = true;
