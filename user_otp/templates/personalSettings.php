@@ -23,51 +23,74 @@
  *
  */
 ?>
-<form id="otp_personal_form">
-    <div id="userotpSettings" class="personalblock">
-        <legend><strong>OTP Configuration</strong></legend>
-        <?php if($_['UserExists']) { ?>
-            <p>
-                User Token Seed : <?php p($_['UserTokenSeed']); ?> 
-                <?php if($_['UserPrefixPin']){ ?>
-                    / User Pin : <?php p($_['UserPin']); ?>
-                <?php } ?>
-                <?php if($_['UserLocked']){ ?>
-                    / <strong>User is locked</strong>
-                <?php } ?>
-            </p>
-            <p>
-                User Algorithm : <?php p($_['UserAlgorithm']); ?> 
-                / 
-                User Token Time Interval Or Last Event : <?php p($_['UserTokenTimeIntervalOrLastEvent']); ?>
-            </p>
-            <p>
-                Token Url Link : <a href="<?php p($_['UserTokenUrlLink']); ?>"><?php p($_['UserTokenUrlLink']); ?></a>
-            </p>
-            <p>
-				With android token apps select base32 before input seed<br/>
-        UserTokenQrCode : <img src="<?php p($_['UserTokenQrCode']); ?>">
-            </p>
-            <?php if(!$_['disableDeleteOtpForUsers']) {?>				
-				<input type="hidden" id="otp_action" name="otp_action" value="delete_otp">
-				<input id="otp_submit_action" type='button' value='Delete'>
-			<?php }else{ ?>
-				User Token Seed (if left blank, it will be generated automatically) : <input type="text" name="UserTokenSeed" value="">
-                <?php if($_['UserPrefixPin']){ ?>
-                    <br/>User Pin (if left blank, it will be generated automatically) :  <input type="text" name="UserPin" value="">
-                <?php } ?>
-				<input type="hidden" id="otp_action" name="otp_action" value="replace_otp">
-				<input id="otp_submit_action" type='button' value='replace'>
+<form id="user_otp" class="section">
+	<h2>OTP Configuration</h2>
+	<?php if($_['UserExists']) { ?>
+		<p>
+			<label for="UserTokenSeed">User Token Seed:</label><br />
+			<input class="otpApplicable" type="text"
+				name="UserTokenSeed"
+				value="<?php p($_['UserTokenSeed']) ?>"
+				pattern="^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]*$" /><br />
+			<em>
+				if left blank, it will be generated automatically<br />
+				NOTICE: Only the following characters are allowed:<br />
+				&nbsp;&nbsp; <?php p(_OTP_VALID_CHARS_) ?>
+			</em><br />
+		<?php if($_['UserPrefixPin']){ ?>
+			<label for="UserPin">User Pin:</label><br />
+			<input class="otpApplicable" type="number"
+				name="UserPin"
+				value="<?php p($_['UserPin']); ?>"><br />
+			<em>if left blank, it will be generated automatically</em><br />
+			<br />
+		<?php } ?>
+		<?php if($_['UserLocked']){ ?>
+			<br />
+			<strong>User is locked</strong>
+		<?php } ?>
+		</p>
+		<p>
+			User Algorithm : <?php p($_['UserAlgorithm']); ?><br />
+		<?php if ($_['UserAlgorithm'] === 'TOTP'): ?>
+			User Token Time Interval
+		<?php elseif ($_['UserAlgorithm'] === 'HOTP'): ?>
+			Last Event
+		<?php endif ?>:
+		<?php p($_['UserTokenTimeIntervalOrLastEvent']); ?>
+		</p>
+		<p>
+			Token Url Link : <a href="<?php p($_['UserTokenUrlLink']); ?>"><?php p($_['UserTokenUrlLink']); ?></a>
+		</p>
+		<p>
+			With android token apps select base32 before input seed<br/>
+			UserTokenQrCode :<br /><img src="<?php p($_['UserTokenQrCode']); ?>">
+		</p>
+		<p>
+			<br />
+			<input class="otp_submit_action" type='submit' value='Update' />
+		<?php if(!$_['!disableDeleteOtpForUsers']): ?>				
+			<input class="otp_submit_action" type='button' value='Delete' />
+		<?php endif ?>
+		</p>
+
+	<?php }else{ ?>
+		<p>
+			<label for="UserTokenSeed">User Token Seed:</label><br />
+			<input class="otpApplicable" type="text" name="UserTokenSeed" value="" pattern="^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]*$"><br />
+			<em>
+				if left blank, it will be generated automatically<br />
+				NOTICE: Only the following characters are allowed:<br />
+				&nbsp;&nbsp; <?php p(_OTP_VALID_CHARS_) ?>
+			</em><br />
+			<?php if($_['UserPrefixPin']){ ?>
+				<label for="UserPin">User Pin:</label><br />
+				<input class="otpApplicable" type="number" name="UserPin" value=""><br />
+				<em>if left blank, it will be generated automatically</em><br />
 			<?php } ?>
-        <?php }else{ ?>
-            <p>
-                User Token Seed (if left blank, it will be generated automatically) : <input type="text" name="UserTokenSeed" value="">
-                <?php if($_['UserPrefixPin']){ ?>
-                    <br/>User Pin (if left blank, it will be generated automatically) :  <input type="text" name="UserPin" value="">
-                <?php } ?>
-                <input type="hidden" name="otp_action" value="create_otp">
-                <input id="otp_submit_action" type='submit' value='Create'>
-            </p>
-        <?php } ?>
-    </div>
+			<br />
+			<input type="hidden" name="otp_action" value="create_otp">
+			<input class="otp_submit_action" type='submit' value='Generate'>
+		</p>
+	<?php } ?>
 </form>

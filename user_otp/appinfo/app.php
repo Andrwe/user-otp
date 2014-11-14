@@ -23,8 +23,14 @@
  *
  */
 
+define('_OTP_VALID_CHARS_', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghiklmnopqrstuvwxyz');
+
 OC::$CLASSPATH['OC_User_OTP'] = 'user_otp/lib/otp.php';
 OCP\Util::connectHook('OC_User', 'pre_login', 'OC_User_OTP', 'pre_login');
+//OCP\Util::connectHook('OC_User', 'logout', 'OC_User_OTP', 'logout');
+
+OCP\App::registerAdmin('user_otp','adminSettings');
+OCP\App::registerPersonal('user_otp','personalSettings');
 
 if (!OCP\User::isLoggedIn()){
 	if (OCP\Config::getAppValue('user_otp','inputOtpAfterPwd','0')!=='1') {
@@ -33,9 +39,6 @@ if (!OCP\User::isLoggedIn()){
 		OCP\Util::addStyle('user_otp', 'styles');
 	}
 } else {
-	OCP\App::registerAdmin('user_otp','adminSettings');
-	OCP\App::registerPersonal('user_otp','personalSettings');
-
 	$isadmin = OC_User::isAdminUser(OC_User::getUser());
 	if($isadmin){
 		\OCP\App::addNavigationEntry(array(

@@ -35,7 +35,7 @@
 					<?php $option['value'] ? p('checked=checked') : '' ?> 
 				/>
 				<label for="<?php p($option['name']) ?>">
-					<?php p($option['label']) ?>:
+					<?php p($option['label']) ?>
 				</label>
 
 			<?php elseif ($option['type'] === 'text' or $option['type'] === 'number'): ?>
@@ -48,6 +48,10 @@
 					name="<?php p($option['name']) ?>"
 					value="<?php p($option['value']) ?>"
 					<?php isset($option['pattern']) ? p('pattern=^[' . $option['pattern'] . ']*$') : '' ?>
+				/>
+				<input class="hidden"
+					name="<?php p($option['name']) ?>_default"
+					value="<?php p($option['default_value']) ?>"
 				/>
 
 			<?php elseif ($option['type'] === 'select'): ?>

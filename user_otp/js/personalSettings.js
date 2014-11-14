@@ -1,21 +1,20 @@
 $(document).ready(function(){
-    $("#otp_submit_action").click( function(){        
-        // Serialize the data
-        var post = $( "#otp_personal_form" ).serialize();
-        //$('#passwordchanged').hide();
-        //$('#passworderror').hide();
-        // Ajax foo
-        //alert(post);
-        $.post( OC.filePath('user_otp', 'ajax', 'personalSettings.php'), post, function(data){
-            if( data.status == "success" ){
-//                $('#passwordchanged').show();
-                   $( "#otp_personal_form" ).submit();
-            }else{
-              alert("Error : " + data.data.message);
-                //$('#passworderror').html( data.data.message );
-                //$('#passworderror').show();
-            }
-        });
-        return false;
+    $(".otp_submit_action").click( function(){        
+      // Serialize the data
+      var post = $( "#user_otp" ).serialize();
+			if (this.value === 'Update') {
+				post = post + '&otp_action=replace_otp';
+			} else if (this.value === 'Delete') {
+				post = post + '&otp_action=delete_otp';
+			}
+      // Ajax foo
+      $.post( OC.filePath('user_otp', 'ajax', 'personalSettings.php'), post, function(data){
+          if( data.status == "success" ){
+            $( "#user_otp" ).submit();
+          }else{
+            alert("Error : " + data.data.message);
+          }
+      });
+      return false;
     }); 
 });

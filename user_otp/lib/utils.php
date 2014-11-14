@@ -14,15 +14,6 @@
 			$length = $length - $length % $length_step;
 		}
 		
-		//~ var_dump(
-			//~ array(
-				//~ $length_min,
-				//~ $length_max,
-				//~ $length_step, 
-				//~ $length
-			//~ )
-		//~ );
-		
 		$str = '';
 		$count = strlen($valid_char);
 		while ($length--) {

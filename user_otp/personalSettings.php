@@ -49,7 +49,7 @@ if($mOtp->CheckUserExists(OCP\User::getUser())){
     $tmpl->assign('UserPin',$mOtp->GetUserPin());
     $tmpl->assign('UserPrefixPin',$mOtp->GetUserPrefixPin());
     $tmpl->assign('UserLocked',$mOtp->GetUserLocked());
-    $tmpl->assign('UserAlgorithm',$mOtp->GetUserAlgorithm());
+    $tmpl->assign('UserAlgorithm',strtoupper($mOtp->GetUserAlgorithm()));
     $tmpl->assign(
         'UserTokenTimeIntervalOrLastEvent',
         strtolower($mOtp->GetUserAlgorithm())==='htop'?

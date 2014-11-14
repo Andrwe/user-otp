@@ -36,11 +36,10 @@ $tmpl = new OCP\Template('user_otp', 'adminSettings');
 $i=0;
 $configOtp[$i]['name']          = 'EncryptionKey'; 
 $configOtp[$i]['label']         = 'Encryption Key';
-$configOtp[$i]['description']   = 'NOTICE: if left blank, it will be generated automatically';
+$configOtp[$i]['description']   = 'NOTICE: if left blank, it will be generated automatically<br />NOTICE: Only the following characters are allowed:<br />&nbsp;&nbsp;' . _OTP_VALID_CHARS_;
 $configOtp[$i]['type']          = 'text';
-$VALID_CHAR = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghiklmnopqrstuvwxyz";
-$configOtp[$i]['pattern']       = $VALID_CHAR;
-$configOtp[$i]['default_value'] = generateRandomString(16,32,2,$VALID_CHAR); $i++;
+$configOtp[$i]['pattern']       = _OTP_VALID_CHARS_;
+$configOtp[$i]['default_value'] = generateRandomString(16,32,2,_OTP_VALID_CHARS_); $i++;
 
 $configOtp[$i]['name']          = 'MaxBlockFailures'; 
 $configOtp[$i]['label']         = 'Max try before a temporary block';
@@ -51,7 +50,7 @@ $configOtp[$i]['name']          = 'UserPrefixPin';
 $configOtp[$i]['label']         = 'User Prefix Pin';
 $configOtp[$i]['description']   = 'add a 4 digit fix prefix before token';
 $configOtp[$i]['type']          = 'number';
-$configOtp[$i]['default_value'] = false; $i++;
+$configOtp[$i]['default_value'] = ''; $i++;
 
 $configOtp[$i]['name']          = 'UserAlgorithm'; 
 $configOtp[$i]['label']         = 'User Algorithm (TOTP/HOTP)';

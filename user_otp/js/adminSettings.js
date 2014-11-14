@@ -10,13 +10,23 @@ $(document).ready(function() {
 	// safe text input settings
   $('input[type="text"].otpApplicable').on('focusout', function() {
 		if (this.checkValidity()) {
-			OC.AppConfig.setValue('user_otp', this.name, this.value);
+			if (this.value !== '') {
+				OC.AppConfig.setValue('user_otp', this.name, this.value);
+			} else {
+				$('[name=' + this.name + ']').val($('[name=' + this.name + '_default]').val());
+				OC.AppConfig.setValue('user_otp', this.name, $('[name=' + this.name + '_default]').val());
+			}
 		}
 	});
 	// safe number input settings
   $('input[type="number"].otpApplicable').on('focusout', function() {
 		if (this.checkValidity()) {
-			OC.AppConfig.setValue('user_otp', this.name, this.value);
+			if (this.value !== '') {
+				OC.AppConfig.setValue('user_otp', this.name, this.value);
+			} else {
+				$('[name=' + this.name + ']').val($('[name=' + this.name + '_default]').val());
+				OC.AppConfig.setValue('user_otp', this.name, $('[name=' + this.name + '_default]').val());
+			}
 		}
 	});
 	// safe select settings

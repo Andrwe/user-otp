@@ -1,4 +1,5 @@
 $(document).ready(function(){
+	$('#otpPassword').remove();
 	$('#password').parent().removeClass("infield groupbottom");
 	$('#password').parent().addClass("infield groupmiddle");
 	$('#password').attr( "autocomplete", "on" );

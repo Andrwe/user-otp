@@ -1,4 +1,3 @@
 $(document).ready(function() {
-  alert($.otpmissing);
-	return true;
+  $('.otperror').delay(2000).fadeOut(400);
 });

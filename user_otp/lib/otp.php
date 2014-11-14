@@ -30,9 +30,29 @@ include_once("user_otp/lib/multiotpdb.php");
  * act as manager for other backend
  * @package user_otp
  */
-class OC_User_OTP extends OC_User_Backend{
+class OC_User_OTP {
 
 	public function pre_login($login) {
+		\OC::$server->getLogger()->warning('Running for user ' . $login['uid'], array('app' => 'user_otp'));
+		$session = OC::$server->getSession();
+		if (!empty($session->get('otp_run')) &&
+			$session->get('otp_result_code') === 'otpsuccess'
+		) {
+			return true;
+		}
+		if (!empty($session->get('otp_run')) &&
+				!empty($session->get('otp_result_code')) &&
+				$session->get('otp_result_code') !== 'otpsuccess'
+		) {
+			self::displayLoginPage('', array(
+					'code' => $session->get('otp_result_code'),
+					'text' => $session->get('otp_result_text')
+				));
+			$session->clear();
+			return true;
+		}
+
+		$session->set('otp_run', 'true');
 
 		if (\OCP\App::isEnabled('user_otp') === false) {
 			return true;
@@ -51,9 +71,17 @@ class OC_User_OTP extends OC_User_Backend{
 		}
 
 		$user = $login['uid'];
+		$password = $login['password'];
+
 		$mOtp =	new MultiOtpDb(OCP\Config::getAppValue(
 			'user_otp','EncryptionKey','DefaultCliEncryptionKey')
 		);
+
+		if(!$mOtp->CheckUserExists($user)){
+			OC_Log::write('OC_USER_OTP','No OTP for user '.$user.' use user backend', OC_Log::DEBUG);
+			\OC::$server->getLogger()->warning('No OTP for user ' . $user . ' found.', array('app' => 'user_otp'));
+			return true;
+		}
 
 		if(defined('DEBUG') && DEBUG===true){
 			$mOtp->EnableVerboseLog();
@@ -67,11 +95,6 @@ class OC_User_OTP extends OC_User_Backend{
 			OCP\Config::getAppValue('user_otp','UserTokenMaxEventWindow',100)
 		);
 
-		if(!$mOtp->CheckUserExists($user)){
-			OC_Log::write('OC_USER_OTP','No OTP for user '.$user.' use user backend', OC_Log::DEBUG);
-			return true;
-		}
-
 		$mOtp->SetUser($user);
 
 		if(OCP\Config::getAppValue('user_otp','inputOtpAfterPwd','0')==='1') {
@@ -83,26 +106,64 @@ class OC_User_OTP extends OC_User_Backend{
 		}
 
 		if(!isset($_POST['otpPassword']) || $_POST['otpPassword']===""){
-			OCP\Util::addScript('user_otp', 'error-missing');
-			OC_Util::displayLoginPage();
+			$session->set('otp_result_code', 'otpmissing');
+			$session->set('otp_result_text', 'The OTP token is missing');
+			OCP\Util::addScript('user_otp', 'error');
+			self::displayLoginPage('', array(
+					'code' => 'otpmissing',
+					'text' => 'The OTP token is missing'
+				));
 			exit();
 		}
 
 		OC_Log::write('OC_USER_OTP','used OTP : '.$_POST['otpPassword'], OC_Log::DEBUG);
 		$result = $mOtp->CheckToken($_POST['otpPassword']);
 		if ($result===0){
+			$session->set('otp_result_code', 'otpsuccess');
 			return true;
 		}else{
+			$session->set('otp_result_code', 'otpwrong');
+			OCP\Util::addScript('user_otp', 'error');
 			if(isset($mOtp->_errors_text[$result])){
-				echo $mOtp->_errors_text[$result];
+				$session->set('otp_result_text', $mOtp->_errors_text[$result]);
+				self::displayLoginPage('', array(
+						'code' => 'otpmissing',
+						'text' => $mOtp->_errors_text[$result]
+					));
+			} else {
+				$session->set('otp_result_text', 'The OTP token was wrong');
+				self::displayLoginPage('', array(
+						'code' => 'otpmissing',
+						'text' => 'The OTP token was wrong'
+					));
 			}
-			OCP\Util::addScript('user_otp', 'error-wrong');
-			OC_Util::displayLoginPage();
 			exit();
 		}
-		OCP\Util::addScript('user_otp', 'error-unknown');
-		OC_Util::displayLoginPage();
-		exit();
+		return false;
 	}
+
+	private function displayLoginPage($errors = array(), $otperror = '') {
+		$parameters = array();
+		foreach ($errors as $value) {
+			$parameters[$value] = true;
+		}
+		$parameters['otperror'] = $otperror;
+		if (!empty($_REQUEST['user'])) {
+			$parameters["username"] = $_REQUEST['user'];
+			$parameters['user_autofocus'] = false;
+		} else {
+			$parameters["username"] = '';
+			$parameters['user_autofocus'] = true;
+		}
+		if (isset($_REQUEST['redirect_url'])) {
+			$redirectUrl = $_REQUEST['redirect_url'];
+			$parameters['redirect_url'] = urlencode($redirectUrl);
+		}
+
+		$parameters['alt_login'] = OC_App::getAlternativeLogIns();
+		$parameters['rememberLoginAllowed'] = OC_Util::rememberLoginAllowed();
+		OC_Template::printGuestPage('user_otp', 'login', $parameters);
+	}
+
 }
 ?>
