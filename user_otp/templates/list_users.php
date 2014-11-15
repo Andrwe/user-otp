@@ -4,14 +4,6 @@
  * This file is licensed under the Affero General Public License version 3 or later.
  * See the COPYING-README file.
  */
-//$allGroups=array();
-//foreach($_["groups"] as $group) {
-//	$allGroups[] = $group['name'];
-//}
-//$_['subadmingroups'] = $allGroups;
-//$items = array_flip($_['subadmingroups']);
-//unset($items['admin']);
-//$_['subadmingroups'] = array_flip($items);
 ?>
 
 <table class="hascontrols grid">

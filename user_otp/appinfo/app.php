@@ -36,16 +36,11 @@ if (OCP\Config::getAppValue('user_otp','inputOtpAfterPwd','0')!=='1') {
 	OCP\Util::addScript('user_otp', 'utils');
 	OCP\Util::addStyle('user_otp', 'styles');
 }
-//var_dump(__LINE__);
-//var_dump(OC_User::getUser());
-//var_dump(OC_User::isAdminUser(OC_User::getUser()));
-//var_dump(OC_Group::getUserGroups(OC_User::getUser()));
-//var_dump(OC_Group::inGroup(OC_User::getUser(), 'admin'));
-//var_dump(OC_Group::inGroup(OC_User::getUser(), 'users'));
-//exit();
+
 $isadmin = OC_User::isAdminUser(OC_User::getUser());
 //var_dump(__LINE__);
-//var_dump($isadmin);
+//var_dump(OC_Group::getUserGroups('alw'));
+//var_dump(OC_Group::getUserGroups('alw@andrwe.org'));
 //exit();
 //if($isadmin){
 	\OCP\App::addNavigationEntry(array(
