@@ -26,144 +26,186 @@
 include_once("user_otp/lib/utils.php");
 include_once("user_otp/lib/multiotpdb.php");
 
-$l=OC_L10N::get('settings');
-
 OCP\JSON::checkLoggedIn();
 OCP\JSON::checkAppEnabled('user_otp');
 OCP\JSON::callCheck();
 
+define('_OTP_SUCCESS_', 1);
+define('_OTP_WARNING_', 3);
+define('_OTP_ERROR_', 3);
+
 if (!isset($_POST)) {
-	OCP\JSON::error(array("data" => array( "message" => $l->t('No POST data found') )));
+	$ajax = new OC_User_OTP_Ajax();
+	$ajax->setError(_OTP_ERROR_, 'No POST data found');
+	$ajax->sendResponse();
+//	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t('No POST data found') )));
 }
 
 if (
 	!empty($_POST["uid"]) &&
-	$_PSOT['uid'] !== OCP\User::getUser()
+	$_POST['uid'] !== OCP\User::getUser()
 ) {
-	OCP\JSON::checkSubAdminUser();
+	OC_JSON::checkSubAdminUser();
 	$uid = $_POST["uid"];
 }else{
 	$uid = OCP\User::getUser();
 }
 
-function deleteOtp($uid) {
-	if ($mOtp->CheckUserExists($uid)) {
-		if($mOtp->DeleteUser($uid)){
-			OCP\JSON::success(array('data' => array( 'message' => $l->t('OTP deleted') )));
-		}else{
-			OCP\JSON::error(array('data' => array( 'message' => $l->t('check apps folder rights') )));
+class OC_User_OTP_Ajax {
+
+	function __construct($uid = '') {
+		$this->mOtp = new MultiOtpDb(OCP\Config::getAppValue(
+			'user_otp','EncryptionKey','DefaultCliEncryptionKey')
+		);
+		$this->uid = $uid;
+		$this->l = OC_L10N::get('settings');
+		$this->error['code'] = _OTP_SUCCESS_;
+		$this->error['msg'] = '';
+	}
+
+	public function sendResponse() {
+		switch ($this->error['code']) {
+			case _OTP_SUCCESS_:
+				OCP\JSON::success(array('data' => array( 'message' => $this->l->t('OTP deleted') )));
+				break;
+			case _OTP_WARNING_:
+				break;
+			case _OTP_ERROR_:
+				OCP\JSON::error(array('data' => array( 'message' => $this->l->t('check apps folder rights') )));
+				break;
+		}		
+	}	
+
+	public function setError($code, $msg = '') {
+		$this->error['code'] = $code;
+		$this->errpr['msg'] = $this->l->t($msg);
+	}
+
+	public function deleteOtp() {
+		if ($this->mOtp->CheckUserExists($this->uid)) {
+			if($this->mOtp->DeleteUser($this->uid)){
+				$this->setError(_OTP_SUCCESS_, 'OTP deleted');
+			}else{
+				$this->setError(_OTP_ERROR_, 'check apps folder rights');
+			}
+			$this->sendResponse();
 		}
 	}
-}
+	
+	public function createOtp() {
+		if($this->mOtp->CheckUserExists($this->uid)){
+			$this->setError(_OTP_ERROR_, 'OTP already exists');
+			$this->sendResponse();
+			return;
+		}
+		  
+		// format token seedll :
+		if(
+			!isset($_POST['UserTokenSeed']) ||
+			$_POST['UserTokenSeed'] === ''
+		){
+			$UserTokenSeed = generateRandomString(16,64,8,_OTP_VALID_CHARS_);
+		}else{
+			$UserTokenSeed = $_POST['UserTokenSeed'];
+		}
+		if(
+			isset($_POST['UserPin'])
+		){
+			$UserPin = $_POST['UserPin'];
+		}else{
+			$UserPin = '';
+		}
+		$UserTokenSeed=bin2hex($UserTokenSeed);
+		$result = $this->mOtp->CreateUser(
+			$this->uid,
+			(OCP\Config::getAppValue('user_otp','UserPrefixPin','0')?1:0),
+			OCP\Config::getAppValue('user_otp','UserAlgorithm','TOTP'),
+			$UserTokenSeed,
+			$UserPin,
+			OCP\Config::getAppValue('user_otp','UserTokenNumberOfDigits','6'),
+			OCP\Config::getAppValue('user_otp','UserTokenTimeIntervalOrLastEvent','30')
+		);
+		if($result){
+			$this->setError(_OTP_SUCCESS_, 'OTP changed');
+		}else{
+			$this->setError(_OTP_ERROR_, 'check apps folder rights');
+		}
+		$this->sendResponse();
+	}
 
-function createOtp($uid) {
-	if($mOtp->CheckUserExists($uid)){
-		OCP\JSON::error(array('data' => array( 'message' => $l->t('OTP already exists') )));
-		return;
+	public function sendOtpEmail() {
+		if ($this->mOtp->CheckUserExists($this->uid)) {
+	
+			$this->mOtp->SetUser($this->uid);
+			
+			$UserTokenSeed = hex2bin($this->mOtp->GetUserTokenSeed());    
+		    
+			$key = 'email';
+			$mail ="";
+			$query=OC_DB::prepare('SELECT `configvalue` FROM `*PREFIX*preferences` WHERE `configkey` = ? AND `userid`=?');
+			$result=$query->execute(array($key, $this->uid));
+			if(!OC_DB::isError($result)) {
+				$row=$result->fetchRow();
+				$mail = $row['configvalue'];
+			}
+		
+			$txtmsg = '<html><p>Hi, '.$this->uid.', <br><br>';
+			$txtmsg .= '<p>find your OTP Configuration<br>';
+			$txtmsg .= 'User Algorithm : '.$this->mOtp->GetUserAlgorithm().'<br>';
+			if($mOtp->GetUserPrefixPin()){
+				$txtmsg .= 'User Pin : '.$this->mOtp->GetUserPin().'<br>';
+			}
+			$txtmsg .= 'User Token Seed : '.$UserTokenSeed."<br>";
+			$txtmsg .= 'User Token Time Interval Or Last Event : '.(strtolower($this->mOtp->GetUserAlgorithm())==='htop'?$this->mOtp->GetUserTokenLastEvent():$this->mOtp->GetUserTokenTimeInterval())."<br>";
+			$txtmsg .= 'Token Url Link : '.$this->mOtp->GetUserTokenUrlLink()."<br>";
+			$txtmsg .= 'With android token apps select base32 before input seed<br>';
+			$txtmsg .= '<img src="data:image/png;base64,'.base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary')).'"/><br><br>';
+		
+			$txtmsg .= $this->l->t('<p>This e-mail is automatic, please, do not reply to it.</p></html>');
+			if ($mail !== NULL) {
+				try{
+					$result = OC_Mail::send($mail, $this->uid, '['.getenv('SERVER_NAME')."] - OTP", $txtmsg, 'Mail_Notification@'.getenv('SERVER_NAME'), 'Owncloud', 1 );	
+					$this->setError(_OTP_SUCCESS_, 'email sent to ' . $mail);
+				}catch(Exception $e){
+					$this->setError(_OTP_ERROR_, $e->getMessage());
+				}
+			}else{
+				$this->setError(_OTP_ERROR_, 'Email address error : ' . $mail);
+			}
+			$this->sendResponse();
+		}
 	}
-	  
-	// format token seedll :
-	if(
-		!isset($_POST['UserTokenSeed']) ||
-		$_POST['UserTokenSeed'] === ''
-	){
-		$UserTokenSeed = generateRandomString(16,64,8,_OTP_VALID_CHARS_);
-	}else{
-		$UserTokenSeed = $_POST['UserTokenSeed'];
-	}
-	if(
-		isset($_POST['UserPin'])
-	){
-		$UserPin = $_POST['UserPin'];
-	}else{
-		$UserPin = '';
-	}
-	$UserTokenSeed=bin2hex($UserTokenSeed);
-	$result = $mOtp->CreateUser(
-		$uid,
-		(OCP\Config::getAppValue('user_otp','UserPrefixPin','0')?1:0),
-		OCP\Config::getAppValue('user_otp','UserAlgorithm','TOTP'),
-		$UserTokenSeed,
-		$UserPin,
-		OCP\Config::getAppValue('user_otp','UserTokenNumberOfDigits','6'),
-		OCP\Config::getAppValue('user_otp','UserTokenTimeIntervalOrLastEvent','30')
-	);
-	if($result){
-	    OCP\JSON::success(array('data' => array( 'message' => $l->t('OTP Changed') )));
-	}else{
-	    OCP\JSON::error(array('data' => array( 'message' => $l->t('check apps folder rights') )));
-	}
-}
 
-// Get data
-$mOtp =  new MultiOtpDb(OCP\Config::getAppValue(
-	'user_otp','EncryptionKey','DefaultCliEncryptionKey')
-);
-$mOtp->EnableVerboseLog();
+}
 
 if (isset($_POST['otp_action'])) {
 	$action = $_POST['otp_action'];
 } else {
-	OCP\JSON::error(array("data" => array( "message" => $l->t("Invalid request") )));
+	$ajax = new OC_User_OTP_Ajax();
+	$ajax->setError(_OTP_ERROR_, 'Invalid request');
+	$ajax->sendResponse();
+//	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t("Invalid request") )));
 }
+
+$ajax = new OC_User_OTP_Ajax($uid);
 
 switch ($action) {
 	case 'delete_otp':
-		deleteOtp($uid);
+		$ajax->deleteOtp();
 		break;
 	case 'create_otp':
-		createOtp($uid);
+		$ajax->createOtp();
 		break;
 	case 'replace_otp':
-		deleteOtp($uid);
-		createOtp($uid);
+		$ajax->deleteOtp();
+		$ajax->createOtp();
 		break;
 	case 'send_email_otp':
 		break;
 	default:
-		OCP\JSON::error(array("data" => array( "message" => $l->t("Invalid request") )));
+		$ajax = new OC_User_OTP_Ajax();
+		$ajax->setError(_OTP_ERROR_, 'Invalid request');
+		$ajax->sendResponse();
+//		OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t("Invalid request") )));
 		break;
-}
-
-function sendOtpEmail($uid) {
-	if ($mOtp->CheckUserExists($uid)) {
-
-		$mOtp->SetUser($uid);
-		
-		$UserTokenSeed = hex2bin($mOtp->GetUserTokenSeed());    
-	    
-		$key = 'email';
-		$mail ="";
-		$query=OC_DB::prepare('SELECT `configvalue` FROM `*PREFIX*preferences` WHERE `configkey` = ? AND `userid`=?');
-		$result=$query->execute(array($key, $uid));
-		if(!OC_DB::isError($result)) {
-			$row=$result->fetchRow();
-			$mail = $row['configvalue'];
-		}
-	
-		$txtmsg = '<html><p>Hi, '.$uid.', <br><br>';
-		$txtmsg .= '<p>find your OTP Configuration<br>';
-		$txtmsg .= 'User Algorithm : '.$mOtp->GetUserAlgorithm().'<br>';
-		if($mOtp->GetUserPrefixPin()){
-			$txtmsg .= 'User Pin : '.$mOtp->GetUserPin().'<br>';
-		}
-		$txtmsg .= 'User Token Seed : '.$UserTokenSeed."<br>";
-		$txtmsg .= 'User Token Time Interval Or Last Event : '.(strtolower($mOtp->GetUserAlgorithm())==='htop'?$mOtp->GetUserTokenLastEvent():$mOtp->GetUserTokenTimeInterval())."<br>";
-		$txtmsg .= 'Token Url Link : '.$mOtp->GetUserTokenUrlLink()."<br>";
-		$txtmsg .= 'With android token apps select base32 before input seed<br>';
-		$txtmsg .= '<img src="data:image/png;base64,'.base64_encode($mOtp->GetUserTokenQrCode($mOtp->GetUser(),'','binary')).'"/><br><br>';
-	
-		$txtmsg .= $l->t('<p>This e-mail is automatic, please, do not reply to it.</p></html>');
-		if ($mail !== NULL) {
-			try{
-				$result = OC_Mail::send($mail, $uid, '['.getenv('SERVER_NAME')."] - OTP", $txtmsg, 'Mail_Notification@'.getenv('SERVER_NAME'), 'Owncloud', 1 );	
-				OCP\JSON::success(array("data" => array( "message" => $l->t("email sent to ".$mail) )));
-			}catch(Exception $e){
-				 OCP\JSON::error(array("data" => array( "message" => $l->t($e->getMessage()) )));
-			}
-		}else{
-			//echo "Email address error<br>";
-			OCP\JSON::error(array("data" => array( "message" => $l->t("Email address error : ".$mail) )));
-		}
-	}
 }

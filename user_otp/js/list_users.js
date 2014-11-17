@@ -93,8 +93,6 @@ $(document).ready(function () {
 		var uid = $(row).attr('data-uid');
 		var UserPin = $(row).find("input[name=UserPinInput]").first().val();
 		var UserTokenSeed = $(row).find('input[name=UserTokenSeedInput]').first().val();
-alert(uid);
-		//alert(UserPin+ " " +UserTokenSeed);
 		$.post(
 			OC.filePath('user_otp', 'ajax', 'personalSettings.php'),
 			{otp_action: 'create_otp',uid: uid, UserPin: UserPin, UserTokenSeed: UserTokenSeed},
