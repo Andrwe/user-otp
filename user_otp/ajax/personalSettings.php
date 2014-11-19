@@ -31,13 +31,15 @@ OCP\JSON::checkAppEnabled('user_otp');
 OCP\JSON::callCheck();
 
 define('_OTP_SUCCESS_', 1);
-define('_OTP_WARNING_', 3);
+define('_OTP_WARNING_', 2);
 define('_OTP_ERROR_', 3);
 
 if (!isset($_POST)) {
 	$ajax = new OC_User_OTP_Ajax();
 	$ajax->setError(_OTP_ERROR_, 'No POST data found');
 	$ajax->sendResponse();
+			\OC::$server->getLogger()->warning('No POST.', array('app' => 'user_otp'));
+	return;
 //	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t('No POST data found') )));
 }
 
@@ -66,19 +68,19 @@ class OC_User_OTP_Ajax {
 	public function sendResponse() {
 		switch ($this->error['code']) {
 			case _OTP_SUCCESS_:
-				OCP\JSON::success(array('data' => array( 'message' => $this->l->t('OTP deleted') )));
+				OCP\JSON::success(array('data' => array( 'message' => $this->error['msg'] )));
 				break;
 			case _OTP_WARNING_:
 				break;
 			case _OTP_ERROR_:
-				OCP\JSON::error(array('data' => array( 'message' => $this->l->t('check apps folder rights') )));
+				OCP\JSON::error(array('data' => array( 'message' => $this->error['msg'])));
 				break;
 		}		
 	}	
 
 	public function setError($code, $msg = '') {
 		$this->error['code'] = $code;
-		$this->errpr['msg'] = $this->l->t($msg);
+		$this->error['msg'] = $this->l->t($msg);
 	}
 
 	public function deleteOtp() {
@@ -184,6 +186,7 @@ if (isset($_POST['otp_action'])) {
 	$ajax = new OC_User_OTP_Ajax();
 	$ajax->setError(_OTP_ERROR_, 'Invalid request');
 	$ajax->sendResponse();
+	return;
 //	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t("Invalid request") )));
 }
 
