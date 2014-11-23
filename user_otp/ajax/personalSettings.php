@@ -40,7 +40,6 @@ if (!isset($_POST)) {
 	$ajax->sendResponse();
 			\OC::$server->getLogger()->warning('No POST.', array('app' => 'user_otp'));
 	return;
-//	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t('No POST data found') )));
 }
 
 if (
@@ -135,44 +134,73 @@ class OC_User_OTP_Ajax {
 		$this->sendResponse();
 	}
 
-	public function sendOtpEmail() {
+	public function sendOtpEmail($reason = 'notify') {
 		if ($this->mOtp->CheckUserExists($this->uid)) {
 	
 			$this->mOtp->SetUser($this->uid);
+
+			$defaults = new \OC_Defaults();
 			
-			$UserTokenSeed = hex2bin($this->mOtp->GetUserTokenSeed());    
+			$i=0;
+			$config[$i]['name'] = 'UserTokenSeed';
+			$config[$i]['value'] = hex2bin($this->mOtp->GetUserTokenSeed());
+			$config[$i]['type'] = 'text';
+			$i++;
+			$config[$i]['name'] = 'Algorithm';
+			$config[$i]['value'] = strtoupper($this->mOtp->GetUserAlgorithm());
+			$config[$i]['type'] = 'text';
+			$i++;
+			$config[$i]['name'] = 'UserPin';
+			$config[$i]['value'] = empty($this->mOtp->GetUserPin()) ? $this->mOtp->GetUserPrefixPin() : $this->mOtp->GetUserPin();
+			$config[$i]['type'] = 'text';
+			$i++;
+			if ($config['Algorithm'] === 'HOTP') {
+				$config[$i]['name'] = 'LastEvent';
+				$config[$i]['value'] = $this->mOtp->GetUserTokenLastEvent();
+			} elseif ($config['Algorithm'] === 'TOTP') {
+				$config[$i]['name'] = 'TimeInterval';
+				$config[$i]['value'] = $this->mOtp->GetUserTokenTimeInterval();
+			}
+			$config[$i]['type'] = 'text';
+			$i++;
+			$config[$i]['name'] = 'TokenUrlLink';
+			$config[$i]['value'] = $this->mOtp->GetUserTokenUrlLink();
+			$config[$i]['type'] = 'link';
+			$i++;
+			$config[$i]['name'] = 'TokenQrCode';
+			$config[$i]['value'] = base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary'));
+			$config[$i]['type'] = 'image';
 		    
-			$key = 'email';
-			$mail ="";
-			$query=OC_DB::prepare('SELECT `configvalue` FROM `*PREFIX*preferences` WHERE `configkey` = ? AND `userid`=?');
-			$result=$query->execute(array($key, $this->uid));
-			if(!OC_DB::isError($result)) {
-				$row=$result->fetchRow();
-				$mail = $row['configvalue'];
-			}
-		
-			$txtmsg = '<html><p>Hi, '.$this->uid.', <br><br>';
-			$txtmsg .= '<p>find your OTP Configuration<br>';
-			$txtmsg .= 'User Algorithm : '.$this->mOtp->GetUserAlgorithm().'<br>';
-			if($mOtp->GetUserPrefixPin()){
-				$txtmsg .= 'User Pin : '.$this->mOtp->GetUserPin().'<br>';
-			}
-			$txtmsg .= 'User Token Seed : '.$UserTokenSeed."<br>";
-			$txtmsg .= 'User Token Time Interval Or Last Event : '.(strtolower($this->mOtp->GetUserAlgorithm())==='htop'?$this->mOtp->GetUserTokenLastEvent():$this->mOtp->GetUserTokenTimeInterval())."<br>";
-			$txtmsg .= 'Token Url Link : '.$this->mOtp->GetUserTokenUrlLink()."<br>";
-			$txtmsg .= 'With android token apps select base32 before input seed<br>';
-			$txtmsg .= '<img src="data:image/png;base64,'.base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary')).'"/><br><br>';
-		
-			$txtmsg .= $this->l->t('<p>This e-mail is automatic, please, do not reply to it.</p></html>');
-			if ($mail !== NULL) {
+			$htmlbody = new \OCP\Template('user_otp', 'email', '');
+			$htmlbody->assign('uid', $this->uid);
+			$htmlbody->assign('fullname', OC_User::getDisplayName($this->uid));
+			$htmlbody->assign('url', \OC_Helper::makeURLAbsolute('/'));
+			$htmlbody->assign('overwriteL10N', $this->l);
+			$htmlbody->assign('config', $config);
+			$htmlmail = $htmlbody->fetchPage();
+
+			$plainbody = new \OCP\Template('user_otp', 'email-plain', '');
+			$plainbody->assign('uid', $this->uid);
+			$plainbody->assign('fullname', OC_User::getDisplayName($this->uid));
+			$plainbody->assign('owncloud_installation', \OC_Helper::makeURLAbsolute('/'));
+			$plainbody->assign('overwriteL10N', $this->l);
+			$plainbody->assign('config', $config);
+			$plainmail = $plainbody->fetchPage();
+
+			$toaddress = 'alw@andrwe.org';
+			$fromaddress = \OCP\Util::getDefaultEmailAddress('no-reply');
+			$fromname = $defaults->getName();
+			$subject = '[' . $defaults->getTitle() . '] ' . $this->l->t('OTP Notification');
+
+			if ($toaddress !== NULL) {
 				try{
-					$result = OC_Mail::send($mail, $this->uid, '['.getenv('SERVER_NAME')."] - OTP", $txtmsg, 'Mail_Notification@'.getenv('SERVER_NAME'), 'Owncloud', 1 );	
-					$this->setError(_OTP_SUCCESS_, 'email sent to ' . $mail);
+					$result = \OCP\Util::sendMail($toaddress, $this->uid, $subject, $htmlmail, $fromaddress, $fromname, 1, $plainmail );	
+					$this->setError(_OTP_SUCCESS_, 'email sent to ' . $toaddress);
 				}catch(Exception $e){
 					$this->setError(_OTP_ERROR_, $e->getMessage());
 				}
 			}else{
-				$this->setError(_OTP_ERROR_, 'Email address error : ' . $mail);
+				$this->setError(_OTP_ERROR_, 'Email address error : ' . $toaddress);
 			}
 			$this->sendResponse();
 		}
@@ -187,7 +215,6 @@ if (isset($_POST['otp_action'])) {
 	$ajax->setError(_OTP_ERROR_, 'Invalid request');
 	$ajax->sendResponse();
 	return;
-//	OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t("Invalid request") )));
 }
 
 $ajax = new OC_User_OTP_Ajax($uid);
@@ -204,11 +231,11 @@ switch ($action) {
 		$ajax->createOtp();
 		break;
 	case 'send_email_otp':
+		$ajax->sendOtpEmail();
 		break;
 	default:
 		$ajax = new OC_User_OTP_Ajax();
 		$ajax->setError(_OTP_ERROR_, 'Invalid request');
 		$ajax->sendResponse();
-//		OCP\JSON::error(array("data" => array( "message" => OC_L10N::get('settings')->t("Invalid request") )));
 		break;
 }

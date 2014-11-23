@@ -13,7 +13,6 @@
 			<th id='headerAvatar' style="text-align:center;width:50px;"></th>
 			<?php endif; ?>
 			<th id='headerName' style="width:100px;"><?php p($l->t('Username'))?></th>
-			<th id="headerHasOtp" style="width:50px;"><?php p($l->t( 'Has OTP' )); ?></th>
 			<th id="headerLocked" style="width:50px;"><?php p($l->t( 'Locked' )); ?></th>
 			<th id="headerAlgorithm" style="width:50px;"><?php p($l->t( 'Algorithm' )); ?></th>
 			<?php if($_['PrefixPin']):?>
@@ -33,7 +32,6 @@
 			<td class="avatar"><div class="avatardiv"></div></td>
 			<?php endif; ?>
 			<td class="name"><?php p($user["name"]); ?></td>
-			<td class=""><span><?php p($user["OtpExist"]); ?></span></td>
 			<td class=""><span><?php p($user["UserLocked"]); ?></span></td>
 			<td class=""><span><?php p($user["UserAlgorithm"]); ?></span></td>
 			<?php if($_['PrefixPin']):?>
@@ -41,13 +39,13 @@
 				<?php if($user["OtpExist"]):?>
 				  <span><?php p($user["UserPin"]); ?></span>
 				<?php else: ?>
-				  <input type="text" name="UserPinInput" value="" style="width:35px;">
+				<input type="number" name="UserPinInput" value="" style="width:35px;">
 				<?php endif;?>
 			</td>
 			<?php endif;?>
 			<td class="">
 				<?php if($user["OtpExist"]):?>
-					 <input type="text" value="<?php p($user["UserTokenSeed"]); ?>" style="width:100%;">
+					 <input type="text" name="UserTokenSeedInput" value="<?php p($user["UserTokenSeed"]); ?>" style="width:100%;">
 				<?php else: ?>
 				  <input type="text" name="UserTokenSeedInput" value="" style="width:100%;">
 				<?php endif;?>	
@@ -55,22 +53,22 @@
 			
 			<td class="remove-otp" style="text-align:center;">
 				<?php if($user["OtpExist"]):?>
-					<a href="#" class="action delete" original-title="<?php p($l->t('Delete OTP'))?>">
-						<img src="<?php print_unescaped(image_path('core', 'actions/delete.svg')) ?>" class="svg" />
+					<a href="#" class="delete" original-title="<?php p($l->t('Delete OTP'))?>">
+						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/delete.svg')) ?>" class="svg" />
 					</a>
 				<?php endif;?>
 			</td>
 			<td class="create-otp" style="text-align:center;">
 				<?php if(!$user["OtpExist"]):?>
-					<a href="#" class="action add" original-title="<?php p($l->t('Create OTP'))?>">
-						<img src="<?php print_unescaped(image_path('core', 'actions/add.svg')) ?>" class="svg" />
+					<a href="#" class="add" original-title="<?php p($l->t('Create OTP'))?>">
+						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/add.svg')) ?>" class="svg" />
 					</a>
 				<?php endif;?>
 			</td>
 			<td class="send-email" style="text-align:center;">
 				<?php if($user["OtpExist"]):?>
-					<a href="#" class="action send-email" original-title="<?php p($l->t('Send email'))?>">
-						<img src="<?php print_unescaped(image_path('core', 'actions/mail.svg')) ?>" class="svg" />
+					<a href="#" class="send-email" original-title="<?php p($l->t('Send email'))?>">
+						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/mail.svg')) ?>" class="svg" />
 					</a>
 				<?php endif;?>
 			</td>
