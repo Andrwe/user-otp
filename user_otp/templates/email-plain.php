@@ -1,0 +1,96 @@
+<?php
+/** @var OC_L10N $l */
+/** @var array $_ */
+$l = $_['overwriteL10N'];
+
+if ($_['fullname'] !== '') {
+	print_unescaped($l->t('Hello %s,', array($_['fullname'])));
+} else {
+	print_unescaped($l->t('Hello %s,', array($_['uid'])));
+}
+?>
+
+<p>
+	you get this mail because <?php print_unescaped($_['url']) ?> generated an OTP token for you.
+</p>
+
+<p>
+	The next time you login to <?php print_unescaped($_['url']) ?> you have to provide a valid OTP token.
+	To generate this token you have to install an OTP token generator e.g.
+  <table>
+		<thead>
+			<tr>
+				<th>System</th>
+				<th>Software</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Android</td>
+				<td>Google Authenticator</td>
+			</tr>
+			<tr>
+				<td>SailfishOS (Jolla)</td>
+				<td>SailOTP</td>
+			</tr>
+			<tr>
+				<td>IOS (iPhone)</td>
+				<td>Google Authenticator</td>
+			</tr>
+			<tr>
+				<td>Windows Phone</td>
+				<td>Authenticator</td>
+			</tr>
+		</tbody>
+	</table>
+More can be found on http/www.rcdevs.com/tokens/?type=software.
+<p>
+<p>
+The following are the settings you have to use to configure your generator:
+
+<table>
+	<thead>
+		<tr>
+			<td>Setting</td>
+			<td>Value</td>
+		</tr>
+	</thead>
+	<tbody>
+	<?php
+		foreach ($_['config'] as $config):
+			if (! empty($config['value'])):
+	?>
+		<tr>
+			<td><?php p($config['name']) ?></td>
+			<td>
+			<?php
+				switch ($config['type']) {
+					case 'text':
+						p($config['value']);
+						break;
+					case 'image':
+						print_unescaped('<img src="data:image/png;base64,' . $config['value'] . '"/>');
+						break;
+					case 'link':
+						print_unescaped('<a href="' . $config['value'] . '" />');
+						break;
+				} 
+			?>
+			</td>
+		</tr>
+	<?php
+			endif;
+		endforeach;
+	 ?>
+	</tbody>
+</table>
+</p>
+
+On entring the token you have to prefix it with the following Pin:
+
+example: UserPin123456
+
+[ENDIF]
+
+If you fail OTPFailCount times to provide a valid token you'll be banned for OTPFailTime minutes.
+
