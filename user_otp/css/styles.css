@@ -10,3 +10,6 @@
 	filter:alpha(opacity=30);
 	opacity:.3;
 }
+.hasDependency {
+	padding-left: 25px;
+}
