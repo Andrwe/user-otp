@@ -89,40 +89,44 @@ class OC_User_OTP_Ajax {
 			}else{
 				$this->setError(_OTP_ERROR_, 'check apps folder rights');
 			}
-			$this->sendResponse();
 		}
 	}
 	
 	public function createOtp() {
 		if($this->mOtp->CheckUserExists($this->uid)){
 			$this->setError(_OTP_ERROR_, 'OTP already exists');
-			$this->sendResponse();
 			return;
 		}
 		  
-		// format token seedll :
 		if(
 			!isset($_POST['UserTokenSeed']) ||
 			$_POST['UserTokenSeed'] === ''
 		){
-			$UserTokenSeed = generateRandomString(16,64,8,_OTP_VALID_CHARS_);
-		}else{
-			$UserTokenSeed = $_POST['UserTokenSeed'];
+			$userTokenSeed = generateRandomString(16,64,8,_OTP_VALID_CHARS_);
+		} else {
+			$userTokenSeed = $_POST['UserTokenSeed'];
 		}
-		if(
-			isset($_POST['UserPin'])
+		if (
+			isset($_POST['UserPin']) &&
+			$_POST['UserPin'] !== ''
 		){
-			$UserPin = $_POST['UserPin'];
-		}else{
-			$UserPin = '';
+			$userPin = $_POST['UserPin'];
+			$useUserPrefixPin = OCP\Config::getAppValue('user_otp','UseUserPrefixPin','0');
+		} else {
+			if (OCP\Config::getAppValue('user_otp','UserPrefixPin','') === '') {
+				$useUserPrefixPin = 0;
+			} else {
+				$useUserPrefixPin = 1;
+			}
+			$userPin = OCP\Config::getAppValue('user_otp','UserPrefixPin','');
 		}
-		$UserTokenSeed=bin2hex($UserTokenSeed);
+		$userTokenSeed = bin2hex($userTokenSeed);
 		$result = $this->mOtp->CreateUser(
 			$this->uid,
-			(OCP\Config::getAppValue('user_otp','UserPrefixPin','0')?1:0),
+			$useUserPrefixPin,
 			OCP\Config::getAppValue('user_otp','UserAlgorithm','TOTP'),
-			$UserTokenSeed,
-			$UserPin,
+			$userTokenSeed,
+			$userPin,
 			OCP\Config::getAppValue('user_otp','UserTokenNumberOfDigits','6'),
 			OCP\Config::getAppValue('user_otp','UserTokenTimeIntervalOrLastEvent','30')
 		);
@@ -131,7 +135,6 @@ class OC_User_OTP_Ajax {
 		}else{
 			$this->setError(_OTP_ERROR_, 'check apps folder rights');
 		}
-		$this->sendResponse();
 	}
 
 	public function sendOtpEmail($reason = 'notify') {
@@ -202,7 +205,6 @@ class OC_User_OTP_Ajax {
 			}else{
 				$this->setError(_OTP_ERROR_, 'Email address error : ' . $toaddress);
 			}
-			$this->sendResponse();
 		}
 	}
 
@@ -222,19 +224,22 @@ $ajax = new OC_User_OTP_Ajax($uid);
 switch ($action) {
 	case 'delete_otp':
 		$ajax->deleteOtp();
+		$ajax->sendResponse();
 		break;
 	case 'create_otp':
 		$ajax->createOtp();
+		$ajax->sendResponse();
 		break;
 	case 'replace_otp':
 		$ajax->deleteOtp();
 		$ajax->createOtp();
+		$ajax->sendResponse();
 		break;
 	case 'send_email_otp':
 		$ajax->sendOtpEmail();
+		$ajax->sendResponse();
 		break;
 	default:
-		$ajax = new OC_User_OTP_Ajax();
 		$ajax->setError(_OTP_ERROR_, 'Invalid request');
 		$ajax->sendResponse();
 		break;

@@ -25,7 +25,7 @@
 ?>
 <form id="user_otp" class="section">
 	<h2>OTP Configuration</h2>
-	<?php if($_['UserExists']) { ?>
+	<?php if($_['UserExists']): ?>
 		<p>
 			<label for="UserTokenSeed">User Token Seed:</label><br />
 			<input class="otpApplicable" type="text"
@@ -37,18 +37,34 @@
 				NOTICE: Only the following characters are allowed:<br />
 				&nbsp;&nbsp; <?php p(_OTP_VALID_CHARS_) ?>
 			</em><br />
-		<?php if($_['UserPrefixPin']){ ?>
-			<label for="UserPin">User Pin:</label><br />
-			<input class="otpApplicable" type="number"
-				name="UserPin"
-				value="<?php p($_['UserPin']); ?>"><br />
-			<em>if left blank, it will be generated automatically</em><br />
-			<br />
-		<?php } ?>
-		<?php if($_['UserLocked']){ ?>
-			<br />
-			<strong>User is locked</strong>
-		<?php } ?>
+			<?php if($_['UseUserPrefixPin']): ?>
+				<br />
+				<?php if($_['AllowUserPrefixPinOverride']): ?>
+					<label for="UserPin">User Pin:</label>
+					<br />
+					<input class="otpApplicable" type="number" name="UserPin" value="<?php p($_['UserPin']) ?>" />
+					<br />
+					<em>NOTICE: if left blank, 
+					<?php if ($_['UserPrefixPin'] === ''): ?>
+						no prefix pin is needed.
+					<?php	else: ?>
+						<?php p($_['UserPrefixPin']) ?> will be used.
+					<?php endif ?>
+					</em>
+				<?php else: ?>
+					<label for="UserPin">User Pin (read only):</label>
+					<br />
+					<input class="otpApplicable" type="number" name="UserPin" value="<?php p($_['UserPin']) ?>" readonly />
+				<?php endif ?>
+				<br />
+				<em>This pin is a prefix to your OTP token. Enter it like <?php p($_['UserPin']) ?>TOKEN</em>
+				<br />
+				<br />
+			<?php endif ?>
+			<?php if($_['UserLocked']): ?>
+				<br />
+				<strong>User is locked</strong>
+			<?php endif ?>
 		</p>
 		<p>
 			User Algorithm : <?php p($_['UserAlgorithm']); ?><br />
@@ -68,29 +84,40 @@
 		</p>
 		<p>
 			<br />
-			<input class="otp_submit_action" type='submit' value='Update' />
+			<input class="otp_submit_action" type='button' value='Update' />
 		<?php if(!$_['!disableDeleteOtpForUsers']): ?>				
 			<input class="otp_submit_action" type='button' value='Delete' />
 		<?php endif ?>
 		</p>
 
-	<?php }else{ ?>
+	<?php else: ?>
 		<p>
 			<label for="UserTokenSeed">User Token Seed:</label><br />
-			<input class="otpApplicable" type="text" name="UserTokenSeed" value="" pattern="^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]*$"><br />
+			<input class="otpApplicable" type="text" name="UserTokenSeed" value="" pattern="^[<?php p(_OTP_VALID_CHARS_) ?>]*$"><br />
 			<em>
 				if left blank, it will be generated automatically<br />
 				NOTICE: Only the following characters are allowed:<br />
 				&nbsp;&nbsp; <?php p(_OTP_VALID_CHARS_) ?>
 			</em><br />
-			<?php if($_['UserPrefixPin']){ ?>
-				<label for="UserPin">User Pin:</label><br />
-				<input class="otpApplicable" type="number" name="UserPin" value=""><br />
-				<em>if left blank, it will be generated automatically</em><br />
-			<?php } ?>
+			<?php if($_['UseUserPrefixPin']): ?>
+				<br />
+				<?php if($_['AllowUserPrefixPinOverride']): ?>
+					<label for="UserPin">User Pin:</label>
+					<br />
+					<input class="otpApplicable" type="number" name="UserPin" value="<?php p($_['UserPin']) ?>" /><br />
+					<em>NOTICE: if left blank, it will be generated automatically</em>
+				<?php else: ?>
+					<label for="UserPin">User Pin (read only):</label>
+					<br />
+					<input class="otpApplicable" type="number" name="UserPin" value="<?php p($_['UserPin']) ?>" readonly /><br />
+				<?php endif ?>
+				<br />
+				<em>This pin is a prefix to your OTP token e.g. <?php p($_['UserPin']) ?>TOKEN</em>
+				<br />
+			<?php endif ?>
 			<br />
 			<input type="hidden" name="otp_action" value="create_otp">
 			<input class="otp_submit_action" type='submit' value='Generate'>
 		</p>
-	<?php } ?>
+	<?php endif ?>
 </form>

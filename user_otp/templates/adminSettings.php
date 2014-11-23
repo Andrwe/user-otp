@@ -41,12 +41,14 @@
 					<label for="<?php p($option['name']) ?>">
 						<?php p($option['label']) ?>
 					</label>
+					<span id="<?php p($option['name']) ?>Msg" class="msg"></span>
 
 				<?php elseif ($option['type'] === 'text' or $option['type'] === 'number'): ?>
 
 					<label for="<?php p($option['name']) ?>">
 						<?php p($option['label']) ?>:
-					</label><br />
+					</label>
+					<span id="<?php p($option['name']) ?>Msg" class="msg"></span><br />
 
 					<input class="otpApplicable" type="<?php p($option['type']) ?>"
 						name="<?php p($option['name']) ?>"
@@ -62,7 +64,8 @@
 
 					<label for="<?php p($option['name']) ?>">
 						<?php p($option['label']) ?>:
-					</label><br />
+					</label>
+					<span id="<?php p($option['name']) ?>Msg" class="msg"></span><br />
 
 					<select class="otpApplicable" name="<?php p($option['name']) ?>">
 					<?php foreach ($option['values'] as $value): ?>

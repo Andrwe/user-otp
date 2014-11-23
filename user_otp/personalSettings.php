@@ -40,16 +40,25 @@ if($mOtp->CheckUserExists(OCP\User::getUser())){
     $tmpl->assign('UserExists',true);
 
     $mOtp->SetUser(OCP\User::getUser());
-    
-    $img=\OCP\Util::linkToRoute('user_otp_qrcode');
 
-    $tmpl->assign('UserTokenUrlLink',$mOtp->GetUserTokenUrlLink());
-    $tmpl->assign('UserTokenQrCode',$img);
-    $tmpl->assign('UserTokenSeed',base32_encode(hex2bin($mOtp->GetUserTokenSeed()))); 
-    $tmpl->assign('UserPin',$mOtp->GetUserPin());
-    $tmpl->assign('UserPrefixPin',$mOtp->GetUserPrefixPin());
-    $tmpl->assign('UserLocked',$mOtp->GetUserLocked());
-    $tmpl->assign('UserAlgorithm',strtoupper($mOtp->GetUserAlgorithm()));
+		if ($mOtp->GetUserPrefixPin()) {
+			$userPin = $mOtp->GetUserPin();
+			if ($userPin === '') {
+				$userPin = OCP\Config::getAppValue('user_otp','UserPrefixPin','');
+			}
+		}
+    
+    $img = \OCP\Util::linkToRoute('user_otp_qrcode');
+
+    $tmpl->assign('UserTokenUrlLink', $mOtp->GetUserTokenUrlLink());
+    $tmpl->assign('UserTokenQrCode', $img);
+    $tmpl->assign('UserTokenSeed', base32_encode(hex2bin($mOtp->GetUserTokenSeed()))); 
+    $tmpl->assign('UserPin', $userPin);
+    $tmpl->assign('UserLocked', $mOtp->GetUserLocked());
+    $tmpl->assign('UserAlgorithm', strtoupper($mOtp->GetUserAlgorithm()));
+    $tmpl->assign('UseUserPrefixPin', OCP\Config::getAppValue('user_otp','UseUserPrefixPin',''));
+    $tmpl->assign('UserPrefixPin', OCP\Config::getAppValue('user_otp','UserPrefixPin',''));
+    $tmpl->assign('AllowUserPrefixPinOverride', OCP\Config::getAppValue('user_otp','AllowUserPrefixPinOverride','0'));
     $tmpl->assign(
         'UserTokenTimeIntervalOrLastEvent',
         strtolower($mOtp->GetUserAlgorithm())==='htop'?
@@ -57,6 +66,8 @@ if($mOtp->CheckUserExists(OCP\User::getUser())){
     );
 }else{
     $tmpl->assign('UserExists',false);
-    $tmpl->assign('UserPrefixPin',OCP\Config::getAppValue('user_otp','UserPrefixPin','0'));
+    $tmpl->assign('UseUserPrefixPin', OCP\Config::getAppValue('user_otp','UseUserPrefixPin',''));
+    $tmpl->assign('AllowUserPrefixPinOverride',OCP\Config::getAppValue('user_otp','AllowUserPrefixPinOverride','0'));
+    $tmpl->assign('UserPin', OCP\Config::getAppValue('user_otp','UserPrefixPin',''));
 }
 return $tmpl->fetchPage();
