@@ -79,7 +79,6 @@
 			Token Url Link : <a href="<?php p($_['UserTokenUrlLink']); ?>"><?php p($_['UserTokenUrlLink']); ?></a>
 		</p>
 		<p>
-			With android token apps select base32 before input seed<br/>
 			UserTokenQrCode :<br /><img src="<?php p($_['UserTokenQrCode']); ?>">
 		</p>
 		<p>

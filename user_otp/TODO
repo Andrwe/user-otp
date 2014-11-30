@@ -1,7 +1,7 @@
 before merge request
 - finish UserPin:
   - reset UserPrefixPin for each user when AllowUserPrefixPinOverride off -> TBD in adminSettings
-  - set correct UserPin on empty -> TBD in personalSettings
+  - DONE: set correct UserPin on empty -> TBD in personalSettings
   - test correct function
 - finish email
   - use template system
@@ -14,6 +14,7 @@ next version:
 - add group listing in user_list.php
 - update multiotp class
 - save setting without reload in personalSettings
+- use global defines for often used default values
 
 maybe:
 - allow admin to configure user_list.php
