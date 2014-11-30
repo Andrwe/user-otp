@@ -14,6 +14,7 @@
 			<?php endif; ?>
 			<th id='headerName'><?php p($l->t('Username'))?></th>
 			<th id="headerLocked"><?php p($l->t( 'Locked' )); ?></th>
+			<th id="headerErrorCount"><?php p($l->t( 'Failed logins' )); ?></th>
 			<th id="headerAlgorithm"><?php p($l->t( 'Algorithm' )); ?></th>
 			<?php if($_['PrefixPin']):?>
 			<th id="headerUserPin"><?php p($l->t( 'UserPin' )); ?></th>
@@ -32,6 +33,7 @@
 			<?php endif; ?>
 			<td class="name"><?php p($user["name"]); ?></td>
 			<td class="otpTextCenter"><span><?php p($user["UserLocked"]); ?></span></td>
+			<td class="otpTextCenter"><span><?php p($user["UserErrorCount"]); ?></span></td>
 			<td class="otpTextCenter"><span><?php p($user["UserAlgorithm"]); ?></span></td>
 			<?php if($_['PrefixPin']):?>
 			<td class="UserPin">

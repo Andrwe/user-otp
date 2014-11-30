@@ -9,7 +9,7 @@ $(document).ready(function(){
 			}
       // Ajax foo
       $.post( OC.filePath('user_otp', 'ajax', 'personalSettings.php'), post, function(data){
-          if( data.status == "success" ){
+          if( data.status === 'success' ){
             $( "#user_otp" ).submit();
           }else{
             alert("Error : " + data.data.message);

@@ -31,7 +31,7 @@
 			<input class="otpApplicable" type="text"
 				name="UserTokenSeed"
 				value="<?php p($_['UserTokenSeed']) ?>"
-				pattern="^[ABCDEFGHIJKLMNOPQRSTUVWXYZ234567]*$" /><br />
+				pattern="^[<?php p(_OTP_VALID_CHARS_) ?>]*$" /><br />
 			<em>
 				if left blank, it will be generated automatically<br />
 				NOTICE: Only the following characters are allowed:<br />

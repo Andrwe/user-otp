@@ -64,6 +64,10 @@ class OC_User_OTP_Ajax {
 		$this->error['msg'] = '';
 	}
 
+	private function writeLog($msg) {
+		\OC::$server->getLogger()->warning($msg, array('app' => 'user_otp'));
+	}
+
 	public function sendResponse() {
 		switch ($this->error['code']) {
 			case _OTP_SUCCESS_:
@@ -86,8 +90,10 @@ class OC_User_OTP_Ajax {
 		if ($this->mOtp->CheckUserExists($this->uid)) {
 			if($this->mOtp->DeleteUser($this->uid)){
 				$this->setError(_OTP_SUCCESS_, 'OTP deleted');
+				return 1;
 			}else{
 				$this->setError(_OTP_ERROR_, 'check apps folder rights');
+				return 0;
 			}
 		}
 	}
@@ -104,7 +110,11 @@ class OC_User_OTP_Ajax {
 		){
 			$userTokenSeed = generateRandomString(16,64,8,_OTP_VALID_CHARS_);
 		} else {
-			$userTokenSeed = $_POST['UserTokenSeed'];
+			if (base32_encode(base32_decode($_POST['UserTokenSeed'])) === $_POST['UserTokenSeed']) {
+				$userTokenSeed = base32_decode($_POST['UserTokenSeed']);
+			} else {
+				$userTokenSeed = $_POST['UserTokenSeed'];
+			}
 		}
 		if (
 			isset($_POST['UserPin']) &&
@@ -231,8 +241,9 @@ switch ($action) {
 		$ajax->sendResponse();
 		break;
 	case 'replace_otp':
-		$ajax->deleteOtp();
-		$ajax->createOtp();
+		if ($ajax->deleteOtp()) {
+			$ajax->createOtp();
+		}
 		$ajax->sendResponse();
 		break;
 	case 'send_email_otp':

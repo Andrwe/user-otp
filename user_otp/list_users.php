@@ -41,17 +41,19 @@ foreach($accessibleusers as $uid => $displayName) {
 	if ( $displayName !== $uid ) {
 		$name = $name . ' ('.$uid.')';
 	}
-	$UserLocked    = '';
-	$UserAlgorithm = '';
-	$UserPin       = '';
-	$UserPrefixPin = '';
+	$userLocked     = '';
+	$userErrorCount = '';
+	$userAlgorithm  = '';
+	$userPin        = '';
+	$userPrefixPin  = '';
+	$otpExist       = $mOtp->CheckUserExists($uid);
 
-	$otpExist = $mOtp->CheckUserExists($uid);
 	if($otpExist){
 		$mOtp->SetUser($uid);
 		$userLocked = $mOtp->GetUserLocked();
+		$userErrorCount = $mOtp->GetUserErrorCounter();
 		$userAlgorithm = strtoupper($mOtp->GetUserAlgorithm());
-		if ($mOtp->GetUserPrefixPin === 0) {
+		if (intval($mOtp->GetUserPrefixPin()) === 0) {
 			$userPin = 'none';
 		} elseif ($mOtp->GetUserPin() === OCP\Config::getAppValue('user_otp','UserPrefixPin','')) {
 			$userPin = 'default';
@@ -66,6 +68,7 @@ foreach($accessibleusers as $uid => $displayName) {
 		'displayName' => $displayName,
 		'OtpExist' => $otpExist,
 		'UserLocked' => $userLocked,
+		'UserErrorCount' => $userErrorCount,
 		'UserAlgorithm' => $userAlgorithm,
 		'UserPin' => $userPin,
 		'UserPrefixPin' => $userPrefixPin,

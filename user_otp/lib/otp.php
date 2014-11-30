@@ -55,7 +55,6 @@ class OC_User_OTP {
 		);
 
 		if(!$mOtp->CheckUserExists($user)){
-			OC_Log::write('OC_USER_OTP','No OTP for user '.$user.' use user backend', OC_Log::DEBUG);
 			\OC::$server->getLogger()->warning('No OTP for user ' . $user . ' found.', array('app' => 'user_otp'));
 			return true;
 		}
@@ -74,15 +73,39 @@ class OC_User_OTP {
 
 		$mOtp->SetUser($user);
 
-		if(OCP\Config::getAppValue('user_otp','inputOtpAfterPwd','0')==='1') {
-			$otpSize = $mOtp->GetTokenNumberOfDigits() + (
-				strlen($mOtp->GetUserPin())* $mOtp->GetUserPrefixPin()
-			);
-			$_POST['otpPassword']=substr($password,-$otpSize);
-			$password = substr($password,0,strlen($password) - $otpSize);
+		if(isset($_POST['otpPassword'])){
+			$otpPassword = $_POST['otpPassword'];
 		}
 
-		if(!isset($_POST['otpPassword']) || $_POST['otpPassword']===""){
+		if ( OCP\Config::getAppValue('user_otp', 'UseUserPrefixPin', 0) &&
+			(	OCP\Config::getAppValue('user_otp', 'UserPrefixPin', '') !== '' ||
+				( $mOtp->GetUserPrefixPin() !== 0 &&
+					$mOtp->GetUserPin !== '' )
+			)
+		) {
+			$otpPwLen = strlen($otpPassword);
+			$userPinLen = strlen($mOtp->GetUserPin);
+			$defaultPinLen = strlen(OCP\Config::getAppValue('user_otp', 'UserPrefixPin', ''));
+			$tokenLen = OCP\Config::getAppValue('user_otp', 'UserTokenNumberOfDigits', 6);
+var_dump(__LINE__);
+var_dump(__FILE__);
+var_dump($otpPwLen);
+var_dump($userPinLen);
+var_dump($defaultPinLen);
+var_dump($tokenLen);
+var_dump(' ' . $otpPwLen . ' = ' . $tokenLen . ' + ' . $userPinLen);
+var_dump(' ' . $otpPwLen . ' = ' . $tokenLen . ' + ' .  $defaultPinLen);
+exit;
+			if ($otpPwLen !== $tokenLen + $userPinLen || $otpPwLen !== $tokenLen + $defaultPinLen) {
+				self::displayLoginPage('', array(
+					'code' => 'otppinmissing',
+					'text' => 'Required prefix pin is missing'
+				));
+				exit();
+			}
+		}
+
+		if(!isset($otpPassword) || $otpPassword === ''){
 			self::displayLoginPage('', array(
 					'code' => 'otpmissing',
 					'text' => 'The OTP token is missing'
@@ -90,8 +113,7 @@ class OC_User_OTP {
 			exit();
 		}
 
-		OC_Log::write('OC_USER_OTP','used OTP : '.$_POST['otpPassword'], OC_Log::DEBUG);
-		$result = $mOtp->CheckToken($_POST['otpPassword']);
+		$result = $mOtp->CheckToken($otpPassword);
 		if ($result===0){
 			return true;
 		}else{

@@ -13,6 +13,7 @@ next version:
 - use language support for every string ($l->t())
 - add group listing in user_list.php
 - update multiotp class
+- save setting without reload in personalSettings
 
 maybe:
 - allow admin to configure user_list.php
