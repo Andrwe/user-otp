@@ -15,7 +15,8 @@ OC_Util::addScript('core', 'jquery.inview');
 OC_Util::addStyle( 'settings', 'settings' );
 
 $users = array();
-$groups = array();
+// preparation for group based user listing
+//$groups = array();
 
 $isadmin = OC_User::isAdminUser(OC_User::getUser());
 
@@ -40,41 +41,45 @@ foreach($accessibleusers as $uid => $displayName) {
 	if ( $displayName !== $uid ) {
 		$name = $name . ' ('.$uid.')';
 	}
-	$UserTokenSeed = '';
 	$UserLocked    = '';
 	$UserAlgorithm = '';
 	$UserPin       = '';
 	$UserPrefixPin = '';
 
-	$OtpExist = $mOtp->CheckUserExists($uid);
-	if($OtpExist){
+	$otpExist = $mOtp->CheckUserExists($uid);
+	if($otpExist){
 		$mOtp->SetUser($uid);
-		$UserTokenSeed=base32_encode(hex2bin($mOtp->GetUserTokenSeed()));
-		$UserLocked=$mOtp->GetUserLocked();
-		$UserAlgorithm=strtoupper($mOtp->GetUserAlgorithm());
-		$UserPin=$mOtp->GetUserPin();
-		$UserPrefixPin=$mOtp->GetUserPrefixPin();
+		$userLocked = $mOtp->GetUserLocked();
+		$userAlgorithm = strtoupper($mOtp->GetUserAlgorithm());
+		if ($mOtp->GetUserPrefixPin === 0) {
+			$userPin = 'none';
+		} elseif ($mOtp->GetUserPin() === OCP\Config::getAppValue('user_otp','UserPrefixPin','')) {
+			$userPin = 'default';
+		} else {
+			$userPin = 'self defined';
+		}
+		$userPrefixPin = $mOtp->GetUserPrefixPin();
 	}
 
 	$users[] = array(
 		'name' => $uid,
 		'displayName' => $displayName,
-		'OtpExist' => $OtpExist,
-		'UserTokenSeed' => $UserTokenSeed,
-		'UserLocked' => $UserLocked,
-		'UserAlgorithm' => $UserAlgorithm,
-		'UserPin' => $UserPin,
-		'UserPrefixPin' => $UserPrefixPin,
+		'OtpExist' => $otpExist,
+		'UserLocked' => $userLocked,
+		'UserAlgorithm' => $userAlgorithm,
+		'UserPin' => $userPin,
+		'UserPrefixPin' => $userPrefixPin,
 	);
 }
 
-foreach( $accessiblegroups as $i ) {
-	// Do some more work here soon
-	$groups[] = array( "name" => $i );
-}
+// preparation for group based user listing
+//foreach( $accessiblegroups as $i ) {
+//	// Do some more work here soon
+//	$groups[] = array( "name" => $i );
+//}
 
 $tmpl = new OC_Template( "user_otp", "list_users", "user" );
-$tmpl->assign('PrefixPin',(OCP\Config::getAppValue('user_otp','UserPrefixPin','0')?1:0));
+$tmpl->assign('PrefixPin', OCP\Config::getAppValue('user_otp','UseUserPrefixPin','0'));
 $tmpl->assign( 'users', $users );
 $tmpl->assign('enableAvatars', \OC_Config::getValue('enable_avatars', true));
 $tmpl->printPage();

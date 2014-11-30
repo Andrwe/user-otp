@@ -13,3 +13,9 @@
 .hasDependency {
 	padding-left: 25px;
 }
+#headerName {
+	width: 100%;
+}
+table.grid td.otpTextCenter {
+	text-align: center;
+}

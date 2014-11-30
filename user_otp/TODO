@@ -1,0 +1,24 @@
+before merge request
+- finish UserPin:
+  - reset UserPrefixPin for each user when AllowUserPrefixPinOverride off -> TBD in adminSettings
+  - set correct UserPin on empty -> TBD in personalSettings
+  - test correct function
+- finish email
+  - use template system
+  - activate templateeditor
+  - finish plain mail text
+  - finish html mail text
+
+next version:
+- use language support for every string ($l->t())
+- add group listing in user_list.php
+- update multiotp class
+
+maybe:
+- allow admin to configure user_list.php
+  - list token seed for group
+  - list pin for group
+  - allow delete/create/send for group
+
+future:
+- implement mobile OTP as already implemented in multiotp
