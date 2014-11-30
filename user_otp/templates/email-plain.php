@@ -10,59 +10,30 @@ if ($_['fullname'] !== '') {
 }
 ?>
 
-<p>
-	you get this mail because <?php print_unescaped($_['url']) ?> generated an OTP token for you.
-</p>
+you get this mail because <?php print_unescaped($_['url']) ?> generated an OTP token for you.
 
-<p>
-	The next time you login to <?php print_unescaped($_['url']) ?> you have to provide a valid OTP token.
-	To generate this token you have to install an OTP token generator e.g.
-  <table>
-		<thead>
-			<tr>
-				<th>System</th>
-				<th>Software</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>Android</td>
-				<td>Google Authenticator</td>
-			</tr>
-			<tr>
-				<td>SailfishOS (Jolla)</td>
-				<td>SailOTP</td>
-			</tr>
-			<tr>
-				<td>IOS (iPhone)</td>
-				<td>Google Authenticator</td>
-			</tr>
-			<tr>
-				<td>Windows Phone</td>
-				<td>Authenticator</td>
-			</tr>
-		</tbody>
-	</table>
+The next time you login to <?php print_unescaped($_['url']) ?> you have to provide a valid OTP token.
+
+To generate this token you have to install an OTP token generator e.g.
+
+	System	Software
+	Android	Google Authenticator
+	SailfishOS (Jolla)	SailOTP
+	IOS (iPhone)	Google Authenticator
+	Windows Phone	Authenticator
+
 More can be found on http/www.rcdevs.com/tokens/?type=software.
-<p>
-<p>
+
+
 The following are the settings you have to use to configure your generator:
 
-<table>
-	<thead>
-		<tr>
 			<td>Setting</td>
 			<td>Value</td>
-		</tr>
-	</thead>
-	<tbody>
 	<?php
 		foreach ($_['config'] as $config):
 			if (! empty($config['value'])):
 	?>
-		<tr>
 			<td><?php p($config['name']) ?></td>
-			<td>
 			<?php
 				switch ($config['type']) {
 					case 'text':
@@ -76,21 +47,8 @@ The following are the settings you have to use to configure your generator:
 						break;
 				} 
 			?>
-			</td>
-		</tr>
 	<?php
 			endif;
 		endforeach;
 	 ?>
-	</tbody>
-</table>
-</p>
-
-On entring the token you have to prefix it with the following Pin:
-
-example: UserPin123456
-
-[ENDIF]
-
-If you fail OTPFailCount times to provide a valid token you'll be banned for OTPFailTime minutes.
 

@@ -43,6 +43,7 @@ if ($_['fullname'] !== '') {
 			</tr>
 		</tbody>
 	</table>
+<br />
 More can be found on http/www.rcdevs.com/tokens/?type=software.
 <p>
 <p>
@@ -54,6 +55,7 @@ The following are the settings you have to use to configure your generator:
 				<tr>
 					<td>Setting</td>
 					<td>Value</td>
+					<td>Description</td>
 				</tr>
 			</thead>
 			<tbody>
@@ -73,10 +75,13 @@ The following are the settings you have to use to configure your generator:
 								print_unescaped('<img src="data:image/png;base64,' . $config['value'] . '"/>');
 								break;
 							case 'link':
-								print_unescaped('<a href="' . $config['value'] . '" />');
+								print_unescaped('<a href="' . $config['value'] . '">' . $config['value'] . '</a>');
 								break;
 						} 
 					?>
+					</td>
+					<td>
+						<?php isset($config['description']) ? p($config['description']) : '' ?>
 					</td>
 				</tr>
 			<?php
@@ -88,10 +93,3 @@ The following are the settings you have to use to configure your generator:
 	</p>
 </p>
 
-On entring the token you have to prefix it with the following Pin:
-
-example: UserPin123456
-
-[ENDIF]
-
-If you fail OTPFailCount times to provide a valid token you'll be banned for OTPFailTime minutes.

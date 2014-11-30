@@ -154,35 +154,56 @@ class OC_User_OTP_Ajax {
 
 			$defaults = new \OC_Defaults();
 			
-			$i=0;
-			$config[$i]['name'] = 'UserTokenSeed';
-			$config[$i]['value'] = hex2bin($this->mOtp->GetUserTokenSeed());
-			$config[$i]['type'] = 'text';
-			$i++;
-			$config[$i]['name'] = 'Algorithm';
-			$config[$i]['value'] = strtoupper($this->mOtp->GetUserAlgorithm());
-			$config[$i]['type'] = 'text';
-			$i++;
-			$config[$i]['name'] = 'UserPin';
-			$config[$i]['value'] = empty($this->mOtp->GetUserPin()) ? $this->mOtp->GetUserPrefixPin() : $this->mOtp->GetUserPin();
-			$config[$i]['type'] = 'text';
-			$i++;
-			if ($config['Algorithm'] === 'HOTP') {
-				$config[$i]['name'] = 'LastEvent';
-				$config[$i]['value'] = $this->mOtp->GetUserTokenLastEvent();
-			} elseif ($config['Algorithm'] === 'TOTP') {
-				$config[$i]['name'] = 'TimeInterval';
-				$config[$i]['value'] = $this->mOtp->GetUserTokenTimeInterval();
+			$config[] = array(
+					'name'  => 'Token seed',
+					'value' => base32_encode(hex2bin($this->mOtp->GetUserTokenSeed())),
+					'type'  => 'text',
+					'description' => $this->l->t('Private password to generate OTP tokens'),
+				);
+			$config[] = array(
+					'name' => 'Algorithm',
+					'value' => strtoupper($this->mOtp->GetUserAlgorithm()),
+					'type' => 'text',
+				);
+			$config[] = array(
+					'name' => 'Number of retries',
+					'value' => $this->mOtp->GetMaxBlockFailures(),
+					'type' => 'text',
+					'description' => $this->l->t('After this much retries you will be locked until an admin unlocks you.'),
+				);
+			$config[] = array(
+					'name' => 'Prefix pin',
+					'value' => empty($this->mOtp->GetUserPin()) ? $this->mOtp->GetUserPrefixPin() : $this->mOtp->GetUserPin(),
+					'type' => 'text',
+					'description' => $this->l->t('This pin has to be prefixed to the generated token. e.g. 1234TOKEN'),
+				);
+			if (strtoupper($this->mOtp->GetUserAlgorithm()) === 'HOTP') {
+				$config[] = array(
+						'name' => 'Last event',
+						'value' => $this->mOtp->GetUserTokenLastEvent(),
+						'type' => 'text',
+						'description' => $this->l->t('Number of tokens used to login.'),
+					);
+			} elseif (strtoupper($this->mOtp->GetUserAlgorithm()) === 'TOTP') {
+				$config[] = array(
+						'name' => 'Time interval',
+						'value' => $this->mOtp->GetUserTokenTimeInterval(),
+						'type' => 'text',
+						'description' => $this->l->t('Amount of time in seconds a generated token is valid.'),
+					);
 			}
-			$config[$i]['type'] = 'text';
-			$i++;
-			$config[$i]['name'] = 'TokenUrlLink';
-			$config[$i]['value'] = $this->mOtp->GetUserTokenUrlLink();
-			$config[$i]['type'] = 'link';
-			$i++;
-			$config[$i]['name'] = 'TokenQrCode';
-			$config[$i]['value'] = base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary'));
-			$config[$i]['type'] = 'image';
+			$config[] = array(
+					'name' => 'Token link',
+					'value' => $this->mOtp->GetUserTokenUrlLink(),
+					'type' => 'link',
+					'description' => $this->l->t('Clicking this link should start your OTP app and at these settings correctly.'),
+				);
+			$config[] = array(
+					'name' => 'QR code',
+					'value' => base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary')),
+					'type' => 'image',
+					'description' => $this->l->t('If you scan this code with your OTP app it will import these settings correctly.'),
+				);
 		    
 			$htmlbody = new \OCP\Template('user_otp', 'email', '');
 			$htmlbody->assign('uid', $this->uid);
@@ -209,11 +230,14 @@ class OC_User_OTP_Ajax {
 				try{
 					$result = \OCP\Util::sendMail($toaddress, $this->uid, $subject, $htmlmail, $fromaddress, $fromname, 1, $plainmail );	
 					$this->setError(_OTP_SUCCESS_, 'email sent to ' . $toaddress);
+					return;
 				}catch(Exception $e){
 					$this->setError(_OTP_ERROR_, $e->getMessage());
+					return;
 				}
 			}else{
 				$this->setError(_OTP_ERROR_, 'Email address error : ' . $toaddress);
+				return;
 			}
 		}
 	}
