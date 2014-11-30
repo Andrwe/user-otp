@@ -57,7 +57,7 @@ $isadmin = OC_User::isAdminUser(OC_User::getUser());
 
     // the icon that will be shown in the navigation
     // this file needs to exist in img/example.png
-    'icon' => \OCP\Util::imagePath('settings', 'admin.svg'),
+    'icon' => \OCP\Util::imagePath('user_otp', 'admin-big.svg'),
 
     // the title of your application. This will be used in the
     // navigation or on the settings page of your app
