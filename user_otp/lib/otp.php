@@ -77,6 +77,14 @@ class OC_User_OTP {
 			$otpPassword = $_POST['otpPassword'];
 		}
 
+		if(!isset($otpPassword) || $otpPassword === ''){
+			self::displayLoginPage('', array(
+					'code' => 'otpmissing',
+					'text' => 'The OTP token is missing'
+				));
+			exit();
+		}
+
 		if ( OCP\Config::getAppValue('user_otp', 'UseUserPrefixPin', 0) &&
 			(	OCP\Config::getAppValue('user_otp', 'UserPrefixPin', '') !== '' ||
 				( $mOtp->GetUserPrefixPin() !== 0 &&
@@ -87,37 +95,21 @@ class OC_User_OTP {
 			$userPinLen = strlen($mOtp->GetUserPin);
 			$defaultPinLen = strlen(OCP\Config::getAppValue('user_otp', 'UserPrefixPin', ''));
 			$tokenLen = OCP\Config::getAppValue('user_otp', 'UserTokenNumberOfDigits', 6);
-var_dump(__LINE__);
-var_dump(__FILE__);
-var_dump($otpPwLen);
-var_dump($userPinLen);
-var_dump($defaultPinLen);
-var_dump($tokenLen);
-var_dump(' ' . $otpPwLen . ' = ' . $tokenLen . ' + ' . $userPinLen);
-var_dump(' ' . $otpPwLen . ' = ' . $tokenLen . ' + ' .  $defaultPinLen);
-exit;
-			if ($otpPwLen !== $tokenLen + $userPinLen || $otpPwLen !== $tokenLen + $defaultPinLen) {
+
+			if ($otpPwLen !== $tokenLen + $userPinLen && $otpPwLen !== $tokenLen + $defaultPinLen) {
 				self::displayLoginPage('', array(
 					'code' => 'otppinmissing',
-					'text' => 'Required prefix pin is missing'
+					'text' => 'Required prefix pin is wrong or missing'
 				));
 				exit();
 			}
-		}
-
-		if(!isset($otpPassword) || $otpPassword === ''){
-			self::displayLoginPage('', array(
-					'code' => 'otpmissing',
-					'text' => 'The OTP token is missing'
-				));
-			exit();
 		}
 
 		$result = $mOtp->CheckToken($otpPassword);
 		if ($result===0){
 			return true;
 		}else{
-			if(isset($mOtp->_errors_text[$result])){
+			if( $result !== 99 && isset($mOtp->_errors_text[$result])){
 				self::displayLoginPage('', array(
 						'code' => 'otpmissing',
 						'text' => $mOtp->_errors_text[$result]
