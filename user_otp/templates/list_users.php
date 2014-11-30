@@ -41,21 +41,21 @@
 			</td>
 			<?php endif;?>
 			
-			<td class="otpTextCenter">
+			<td class="otpTextCenter remove-otp">
 				<?php if($user["OtpExist"]):?>
 					<a href="#" class="delete" original-title="<?php p($l->t('Delete OTP'))?>">
 						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/delete.svg')) ?>" class="svg" />
 					</a>
 				<?php endif;?>
 			</td>
-			<td class="otpTextCenter">
+			<td class="otpTextCenter create-otp">
 				<?php if(!$user["OtpExist"]):?>
 					<a href="#" class="add" original-title="<?php p($l->t('Create OTP'))?>">
 						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/add.svg')) ?>" class="svg" />
 					</a>
 				<?php endif;?>
 			</td>
-			<td class="otpTextCenter">
+			<td class="otpTextCenter send-email">
 				<?php if($user["OtpExist"]):?>
 					<a href="#" class="send-email" original-title="<?php p($l->t('Send email'))?>">
 						<img class="action" src="<?php print_unescaped(image_path('core', 'actions/mail.svg')) ?>" class="svg" />
