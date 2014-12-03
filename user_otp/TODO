@@ -1,11 +1,14 @@
 before merge request
 - finish UserPin:
-  - reset UserPrefixPin for each user when AllowUserPrefixPinOverride off -> TBD in adminSettings
+  - reset UserPrefixPin, UserPin for each user when AllowUserPrefixPinOverride off -> TBD in adminSettings
+		- trigger by adminSettings change
+		- call AJAX-API
+		- run DB changes in AJAX-API
+		- sent Mail to eahc affected user
   - DONE: set correct UserPin on empty -> TBD in personalSettings
   - test correct function
 - finish email
-  - DONE:use template system
-  - activate templateeditor
+  - DONE: use template system
   - DONE: finish plain mail text
   - DONE: finish html mail text
 
@@ -22,8 +25,11 @@ maybe:
   - list token seed for group
   - list pin for group
   - allow delete/create/send for group
+- rename AJAX-API file
 
 future:
 - implement mobile OTP as already implemented in multiotp
-- check which classes should be used (lib/private vs. lib/public e.g. OC_User vs. \OCP\User)
+- check with OC-devs (#owncloud-dev) which classes should be used (lib/private vs. lib/public e.g. OC_User vs. \OCP\User)
 - enhance logging
+- use templateeditor (https://github.com/owncloud/templateeditor/issues/12 has to be solved first)
+- more documentation/comments
