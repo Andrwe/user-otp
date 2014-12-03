@@ -15,6 +15,7 @@ next version:
 - update multiotp class
 - save setting without reload in personalSettings
 - use global defines for often used default values
+- implement a post login page to request OTP token
 
 maybe:
 - allow admin to configure user_list.php
@@ -24,3 +25,4 @@ maybe:
 
 future:
 - implement mobile OTP as already implemented in multiotp
+- check which classes should be used (lib/private vs. lib/public e.g. OC_User vs. \OCP\User)
