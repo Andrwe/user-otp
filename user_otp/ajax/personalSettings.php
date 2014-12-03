@@ -78,8 +78,8 @@ class OC_User_OTP_Ajax {
 			case _OTP_ERROR_:
 				OCP\JSON::error(array('data' => array( 'message' => $this->error['msg'])));
 				break;
-		}		
-	}	
+		}
+	}
 
 	public function setError($code, $msg = '') {
 		$this->error['code'] = $code;
@@ -89,6 +89,7 @@ class OC_User_OTP_Ajax {
 	public function deleteOtp() {
 		if ($this->mOtp->CheckUserExists($this->uid)) {
 			if($this->mOtp->DeleteUser($this->uid)){
+				$this->sendOtpEmail('delete');
 				$this->setError(_OTP_SUCCESS_, 'OTP deleted');
 				return 1;
 			}else{
@@ -97,13 +98,13 @@ class OC_User_OTP_Ajax {
 			}
 		}
 	}
-	
+
 	public function createOtp() {
 		if($this->mOtp->CheckUserExists($this->uid)){
 			$this->setError(_OTP_ERROR_, 'OTP already exists');
 			return;
 		}
-		  
+
 		if(
 			!isset($_POST['UserTokenSeed']) ||
 			$_POST['UserTokenSeed'] === ''
@@ -141,94 +142,149 @@ class OC_User_OTP_Ajax {
 			OCP\Config::getAppValue('user_otp','UserTokenTimeIntervalOrLastEvent','30')
 		);
 		if($result){
-			$this->setError(_OTP_SUCCESS_, 'OTP changed');
+			$this->sendOtpEmail('create');
+			$this->setError(_OTP_SUCCESS_, 'OTP created');
 		}else{
 			$this->setError(_OTP_ERROR_, 'check apps folder rights');
 		}
 	}
 
-	public function sendOtpEmail($reason = 'notify') {
+	public function sendOtpEmail($template = 'resent') {
 		if ($this->mOtp->CheckUserExists($this->uid)) {
-	
-			$this->mOtp->SetUser($this->uid);
 
-			$defaults = new \OC_Defaults();
-			
-			$config[] = array(
-					'name'  => 'Token seed',
-					'value' => base32_encode(hex2bin($this->mOtp->GetUserTokenSeed())),
-					'type'  => 'text',
-					'description' => $this->l->t('Private password to generate OTP tokens'),
-				);
-			$config[] = array(
-					'name' => 'Algorithm',
-					'value' => strtoupper($this->mOtp->GetUserAlgorithm()),
-					'type' => 'text',
-				);
-			$config[] = array(
-					'name' => 'Number of retries',
-					'value' => $this->mOtp->GetMaxBlockFailures(),
-					'type' => 'text',
-					'description' => $this->l->t('After this much retries you will be locked until an admin unlocks you.'),
-				);
-			$config[] = array(
-					'name' => 'Prefix pin',
-					'value' => empty($this->mOtp->GetUserPin()) ? $this->mOtp->GetUserPrefixPin() : $this->mOtp->GetUserPin(),
-					'type' => 'text',
-					'description' => $this->l->t('This pin has to be prefixed to the generated token. e.g. 1234TOKEN'),
-				);
-			if (strtoupper($this->mOtp->GetUserAlgorithm()) === 'HOTP') {
-				$config[] = array(
-						'name' => 'Last event',
-						'value' => $this->mOtp->GetUserTokenLastEvent(),
-						'type' => 'text',
-						'description' => $this->l->t('Number of tokens used to login.'),
-					);
-			} elseif (strtoupper($this->mOtp->GetUserAlgorithm()) === 'TOTP') {
-				$config[] = array(
-						'name' => 'Time interval',
-						'value' => $this->mOtp->GetUserTokenTimeInterval(),
-						'type' => 'text',
-						'description' => $this->l->t('Amount of time in seconds a generated token is valid.'),
-					);
+			// FIXME: find a safer way to get mail address
+			$toaddress = \OCP\Config::getUserValue($this->uid, 'settings', 'email');
+			if ($toaddress === NULL) {
+				// if uid is a valid mail address (e.g. for IMAP backend) use it as recipient
+				if (OC_Mail::validateAddress($this->uid)) {
+					$toaddress = $this->uid;
+				}
 			}
-			$config[] = array(
-					'name' => 'Token link',
-					'value' => $this->mOtp->GetUserTokenUrlLink(),
-					'type' => 'link',
-					'description' => $this->l->t('Clicking this link should start your OTP app and at these settings correctly.'),
-				);
-			$config[] = array(
-					'name' => 'QR code',
-					'value' => base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary')),
-					'type' => 'image',
-					'description' => $this->l->t('If you scan this code with your OTP app it will import these settings correctly.'),
-				);
-		    
-			$htmlbody = new \OCP\Template('user_otp', 'email', '');
-			$htmlbody->assign('uid', $this->uid);
-			$htmlbody->assign('fullname', OC_User::getDisplayName($this->uid));
-			$htmlbody->assign('url', \OC_Helper::makeURLAbsolute('/'));
-			$htmlbody->assign('overwriteL10N', $this->l);
-			$htmlbody->assign('config', $config);
-			$htmlmail = $htmlbody->fetchPage();
-
-			$plainbody = new \OCP\Template('user_otp', 'email-plain', '');
-			$plainbody->assign('uid', $this->uid);
-			$plainbody->assign('fullname', OC_User::getDisplayName($this->uid));
-			$plainbody->assign('owncloud_installation', \OC_Helper::makeURLAbsolute('/'));
-			$plainbody->assign('overwriteL10N', $this->l);
-			$plainbody->assign('config', $config);
-			$plainmail = $plainbody->fetchPage();
-
-			$toaddress = 'alw@andrwe.org';
-			$fromaddress = \OCP\Util::getDefaultEmailAddress('no-reply');
-			$fromname = $defaults->getName();
-			$subject = '[' . $defaults->getTitle() . '] ' . $this->l->t('OTP Notification');
 
 			if ($toaddress !== NULL) {
+
+				$this->mOtp->SetUser($this->uid);
+
+				$defaults = new \OC_Defaults();
+
+				$config[] = array(
+						'name'  => 'Token seed',
+						'value' => base32_encode(hex2bin($this->mOtp->GetUserTokenSeed())),
+						'type'  => 'text',
+						'description' => $this->l->t('Private password to generate OTP tokens'),
+					);
+				$config[] = array(
+						'name' => 'Algorithm',
+						'value' => strtoupper($this->mOtp->GetUserAlgorithm()),
+						'type' => 'text',
+					);
+				$config[] = array(
+						'name' => 'Number of retries',
+						'value' => $this->mOtp->GetMaxBlockFailures(),
+						'type' => 'text',
+						'description' => $this->l->t('After this much retries you will be locked until an admin unlocks you.'),
+					);
+				$config[] = array(
+						'name' => 'Prefix pin',
+						'value' => empty($this->mOtp->GetUserPin()) ? $this->mOtp->GetUserPrefixPin() : $this->mOtp->GetUserPin(),
+						'type' => 'text',
+						'description' => $this->l->t('This pin has to be prefixed to the generated token. e.g. 1234TOKEN'),
+					);
+				if (strtoupper($this->mOtp->GetUserAlgorithm()) === 'HOTP') {
+					$config[] = array(
+							'name' => 'Last event',
+							'value' => $this->mOtp->GetUserTokenLastEvent(),
+							'type' => 'text',
+							'description' => $this->l->t('Number of tokens used to login.'),
+						);
+				} elseif (strtoupper($this->mOtp->GetUserAlgorithm()) === 'TOTP') {
+					$config[] = array(
+							'name' => 'Time interval',
+							'value' => $this->mOtp->GetUserTokenTimeInterval(),
+							'type' => 'text',
+							'description' => $this->l->t('Amount of time in seconds a generated token is valid.'),
+						);
+				}
+				$config[] = array(
+						'name' => 'Token link',
+						'value' => $this->mOtp->GetUserTokenUrlLink(),
+						'type' => 'link',
+						'description' => $this->l->t('Clicking this link should start your OTP app and at these settings correctly.'),
+					);
+				$config[] = array(
+						'name' => 'QR code',
+						'value' => base64_encode($this->mOtp->GetUserTokenQrCode($this->mOtp->GetUser(),'','binary')),
+						'type' => 'image',
+						'description' => $this->l->t('If you scan this code with your OTP app it will import these settings correctly.'),
+					);
+				$config[] = array(
+						'name' => 'QR code link',
+						'value' => \OCP\Util::linkToAbsolute('user_otp', 'qrcode.php'),
+						'type' => 'link',
+						'description' => $this->l->t('If you scan the code on the linked page with your OTP app it will import these settings correctly.'),
+					);
+
+				$fromaddress = \OCP\Util::getDefaultEmailAddress('no-reply');
+				$fromname = $defaults->getName();
+				$subject = '[' . $defaults->getTitle() . '] ' . $this->l->t('OTP Notification');
+
+				$theme = OC_Util::getTheme();
+				$ocroot = OC::$SERVERROOT;
+				$apppath = OC_App::getAppPath('user_otp');
+
+
+				// FIXME: check whether template file exists as \OCP\Template() doesn't check and raises a fatal exception
+				if (
+					\OC\Files::file_exists(
+						\OCP\Template::getAppTemplateDirs(
+							$theme,
+							'user_otp',
+							$ocroot,
+							$apppath
+						) . 'email-' . $template . '-html.php'
+					)
+				) {
+					$htmlbody = new \OCP\Template('user_otp', 'email-' . $template . '-html', '');
+					$htmlbody->assign('uid', $this->uid);
+					$htmlbody->assign('fullname', OC_User::getDisplayName($this->uid));
+					$htmlbody->assign('requestor', OC_User::getUser());
+					$htmlbody->assign('url', \OC_Helper::makeURLAbsolute('/'));
+					$htmlbody->assign('title', $defaults->getTitle());
+					$htmlbody->assign('footer', OC_Mail::getfooter());
+					$htmlbody->assign('overwriteL10N', $this->l);
+					$htmlbody->assign('config', $config);
+					$htmlmail = $htmlbody->fetchPage();
+				} else {
+					$htmlmail = '';
+				}
+
+				// FIXME: check whether template file exists as \OCP\Template() doesn't check and raises a fatal exception
+				if (
+					\OC\Files::file_exists(
+						\OCP\Template::getAppTemplateDirs(
+							$theme,
+							'user_otp',
+							$ocroot,
+							$apppath
+						) . 'email-' . $template . '-plain.php'
+					)
+				) {
+					$plainbody = new \OCP\Template('user_otp', 'email-' . $template . '-plain', '');
+					$plainbody->assign('uid', $this->uid);
+					$plainbody->assign('fullname', OC_User::getDisplayName($this->uid));
+					$plainbody->assign('requestor', OC_User::getUser());
+					$plainbody->assign('url', \OC_Helper::makeURLAbsolute('/'));
+					$plainbody->assign('title', $defaults->getTitle());
+					$plainbody->assign('footer', OC_Mail::getfooter());
+					$plainbody->assign('overwriteL10N', $this->l);
+					$plainbody->assign('config', $config);
+					$plainmail = $plainbody->fetchPage();
+				} else {
+					$plainmail = '';
+				}
+
 				try{
-					$result = \OCP\Util::sendMail($toaddress, $this->uid, $subject, $htmlmail, $fromaddress, $fromname, 1, $plainmail );	
+					$result = \OCP\Util::sendMail($toaddress, $this->uid, $subject, $htmlmail, $fromaddress, $fromname, 1, $plainmail );
 					$this->setError(_OTP_SUCCESS_, 'email sent to ' . $toaddress);
 					return;
 				}catch(Exception $e){
@@ -236,7 +292,7 @@ class OC_User_OTP_Ajax {
 					return;
 				}
 			}else{
-				$this->setError(_OTP_ERROR_, 'Email address error : ' . $toaddress);
+				$this->setError(_OTP_ERROR_, 'No e-mail address found for user: ' . $this->uid);
 				return;
 			}
 		}
@@ -271,7 +327,7 @@ switch ($action) {
 		$ajax->sendResponse();
 		break;
 	case 'send_email_otp':
-		$ajax->sendOtpEmail();
+		$ajax->sendOtpEmail('resent');
 		$ajax->sendResponse();
 		break;
 	default:

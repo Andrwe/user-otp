@@ -4,10 +4,10 @@ before merge request
   - DONE: set correct UserPin on empty -> TBD in personalSettings
   - test correct function
 - finish email
-  - use template system
+  - DONE:use template system
   - activate templateeditor
-  - finish plain mail text
-  - finish html mail text
+  - DONE: finish plain mail text
+  - DONE: finish html mail text
 
 next version:
 - use language support for every string ($l->t())
@@ -26,3 +26,4 @@ maybe:
 future:
 - implement mobile OTP as already implemented in multiotp
 - check which classes should be used (lib/private vs. lib/public e.g. OC_User vs. \OCP\User)
+- enhance logging
