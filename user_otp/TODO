@@ -11,6 +11,7 @@ before merge request
   - DONE: use template system
   - DONE: finish plain mail text
   - DONE: finish html mail text
+- set correct license
 
 next version:
 - use language support for every string ($l->t())
@@ -33,3 +34,6 @@ future:
 - enhance logging
 - use templateeditor (https://github.com/owncloud/templateeditor/issues/12 has to be solved first)
 - more documentation/comments
+- implement php namespace
+- reimplement otpuserdata & otpuserdatamapper
+- implement OC container

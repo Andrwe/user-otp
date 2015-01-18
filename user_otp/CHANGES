@@ -7,6 +7,7 @@ __global changes__
 		- automagically fix usage with other login backend like IMAP (https://github.com/loki36/user-otp/issues/83) and LDAP (https://github.com/loki36/user-otp/issues/67)
 	- disadvantages:
 		- OTP as part of password not possible anymore
+		- https://github.com/loki36/user-otp/issues/82 is not possible
 - code cleanup
 - styles are handled by css files
 - implement pseudo-boolean 'request_prefix_pin' of multiotp class
