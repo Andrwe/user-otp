@@ -298,6 +298,18 @@ class OC_User_OTP_Ajax {
 		}
 	}
 
+	public function replaceDefaultPin() {
+		if (
+			isset($_POST['newpin']) &&
+			isset($_POST['oldpin'])
+		) {
+			$newpin = $_POST['newpin'];
+			$oldpin = $_POST['oldpin'];
+			if ($oldpin === 'all') {
+			} else {
+			}
+		}
+	}
 }
 
 if (isset($_POST['otp_action'])) {
@@ -328,6 +340,10 @@ switch ($action) {
 		break;
 	case 'send_email_otp':
 		$ajax->sendOtpEmail('resent');
+		$ajax->sendResponse();
+		break;
+	case 'replace_default_pin':
+		$ajax->replaceDefaultPin();
 		$ajax->sendResponse();
 		break;
 	default:
