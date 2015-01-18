@@ -26,6 +26,9 @@ class OtpUserData {
         }
     }
 
+		// run setter function for every elemtent of $row
+		// name of setter function is created by manipulating the key-string
+		// e.g. $row['foo_bar'] => setFooBar()
     public function fromRow($row){
         foreach($row as $key =>$value){
           $DbKey = preg_replace("/ /","",ucwords(preg_replace("/_/"," ",$key)));
