@@ -92,7 +92,7 @@ class OC_User_OTP {
 			)
 		) {
 			$otpPwLen = strlen($otpPassword);
-			$userPinLen = strlen($mOtp->GetUserPin);
+			$userPinLen = strlen($mOtp->GetUserPin());
 			$defaultPinLen = strlen(OCP\Config::getAppValue('user_otp', 'UserPrefixPin', ''));
 			$tokenLen = OCP\Config::getAppValue('user_otp', 'UserTokenNumberOfDigits', 6);
 
